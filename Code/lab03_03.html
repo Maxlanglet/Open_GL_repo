@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+</head>
+
+<body>
+    <h1>Light - Diffuse Gouraud</h1>
+    <p>Implement Gouraud shading on a sphere</p>
+    <ul>
+        <li>You need to make the sphere and export it from Blender</li>
+        <li>Don't forget to put the light somewhere in the scene (it's a vec3 sent to the shader)</li>
+        <li>Don't forget that normals are NOT vectors but unitary vectors, they transform as described in the slides!</li>
+    </ul>
+    <canvas id="webgl_canvas" width="500" height="500"></canvas>
+    <div id="fps"></div>
+    <div id="camera_mat"></div>
+    <div id="proj_mat"></div>
+
+    <script src="../gl-matrix-min.js"></script>
+    <script language="javascript" type="text/javascript" src="../camera.js"></script>
+    <script language="javascript" type="text/javascript" src="../shaders.js"></script>
+    <script language="javascript" type="text/javascript" src="../textures.js"></script>
+    <script language="javascript" type="text/javascript" src="objects_02.js"></script>
+    <script>
+        async function main() {
+            // Boilerplate code
+            const canvas = document.getElementById('webgl_canvas');
+            c_width = canvas.width
+            c_height = canvas.height
+            const gl = canvas.getContext('webgl');
+
+            // Enable tests for better rendering
+            gl.enable(gl.DEPTH_TEST);
+            //gl.enable(gl.CULL_FACE); // cull hidden faces behind normals!
+
+            const sourceV = `
+      attribute vec3 position;
+      attribute vec2 texcoord;
+      attribute vec3 normal;
+      varying vec3 v_diffuse;
+      
+      uniform mat4 M;
+      uniform mat4 itM;  // inverse transpose model!
+      uniform mat4 V;
+      uniform mat4 P;
+      
+      uniform vec3 u_light_pos;
+
+      void main() {
+        vec4 frag_coord = M*vec4(position, 1.0);
+        gl_Position = P*V*frag_coord;
+        
+        // Transform correctly the normals!
+        vec3 norm = vec3(itM * vec4(normal, 1.0));
+        
+        // Gouraud: let's compute the diffuse light with the normals at the vertices
+        vec3 L = normalize(u_light_pos - frag_coord.xyz);
+        float diffusion = max(0.0, dot(norm, L));
+        v_diffuse = vec3(diffusion); // same component on every direction
+        
+      }
+    `;
+
+            const sourceF = `
+      precision mediump float;
+      varying vec3 v_diffuse;
+      
+      uniform sampler2D u_texture;
+
+      void main() {
+        vec3 color = vec3(v_diffuse);
+        gl_FragColor = vec4(color, 1.0);
+      }
+    `;
+
+            var shader_gouraud = make_shader(gl, sourceV, sourceF);
+            
+            // loading the object from a file
+            var sphere1 = await load_obj('../objects/sphere_extremely_coarse.obj');
+            var sphere2 = await load_obj('../objects/sphere_coarse.obj');
+            var sphere3 = await load_obj('../objects/sphere_smooth.obj');
+            // Asynchronous call, we waited till the object was ready
+            // Make the buffer and the functions to draw the object:
+            var s1_mesh = await make_object(gl, sphere1)
+            var s2_mesh = await make_object(gl, sphere2)
+            var s3_mesh = await make_object(gl, sphere3)
+            
+            // Translate the spheres
+            s1_mesh.model = glMatrix.mat4.translate(s1_mesh.model,s1_mesh.model,
+                                                    glMatrix.vec3.fromValues(2.3, 0.0, 0.0));
+            s3_mesh.model = glMatrix.mat4.translate(s3_mesh.model,s3_mesh.model,
+                                                    glMatrix.vec3.fromValues(-2.3, 0.0, 0.0));
+
+            
+            // We define a light in space and retrieve its ID in the shader
+            const light_pos = glMatrix.vec3.fromValues(1.0, 0.0, -1.8);
+            const u_light_pos = gl.getUniformLocation(shader_gouraud.program, 'u_light_pos');
+            
+            // We need to send the inverse transpose of the model matrix for the model
+            const u_itM = gl.getUniformLocation(shader_gouraud.program, 'itM');
+            
+            
+            position = glMatrix.vec3.fromValues(1, 0, -6.0)
+            up = glMatrix.vec3.fromValues(0.0, 1.0, 0.0)
+            yaw = -90.0
+            pitch = 0.0
+            var camera = make_camera(canvas, position, up, yaw, pitch)
+            var projection = camera.get_projection(45.0, c_width / c_height, 0.01, 100.0)
+            
+            var deltaTime = 0;
+
+            function animate(time) {
+                deltaTime += 0.005;
+                camera.update(deltaTime);
+                //Draw loop
+                gl.clearColor(0.2, 0.2, 0.2, 1);
+                gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+                shader_gouraud.use();
+                var unif = shader_gouraud.get_uniforms();
+                view = camera.get_view_matrix();
+                gl.uniformMatrix4fv(unif['view'], false, view);
+                gl.uniformMatrix4fv(unif['proj'], false, projection);
+                // Send the light position to the shader
+                gl.uniform3fv(u_light_pos, light_pos);
+                
+                s1_mesh.activate(shader_gouraud);
+                gl.uniformMatrix4fv(unif['model'], false, s1_mesh.model);
+                var itM = glMatrix.mat4.create();
+                itM = glMatrix.mat4.invert(itM, s1_mesh.model);
+                itM = glMatrix.mat4.transpose(itM, itM);
+                gl.uniformMatrix4fv(u_itM, false, itM);
+                s1_mesh.draw();
+                
+                // We use the same shader to draw the second sphere
+                s2_mesh.activate(shader_gouraud);
+                // Only the model matrix changes!
+                gl.uniformMatrix4fv(unif['model'], false, s2_mesh.model);
+                itM = glMatrix.mat4.invert(itM, s2_mesh.model);
+                itM = glMatrix.mat4.transpose(itM, itM);
+                gl.uniformMatrix4fv(u_itM, false, itM);
+                s2_mesh.draw();
+                
+                s3_mesh.activate(shader_gouraud);
+                // Only the model matrix changes!
+                gl.uniformMatrix4fv(unif['model'], false, s3_mesh.model);
+                itM = glMatrix.mat4.invert(itM, s3_mesh.model);
+                itM = glMatrix.mat4.transpose(itM, itM);
+                gl.uniformMatrix4fv(u_itM, false, itM);
+                s3_mesh.draw();
+
+                fps(time);
+                window.requestAnimationFrame(animate); // While(True) loop!
+            }
+
+            var prev = 0
+            const fpsElem = document.querySelector("#fps");
+
+            function fps(now) {
+                now *= 0.001;
+                const deltaTime = now - prev;
+                prev = now;
+                const fps = 1 / deltaTime;
+                fpsElem.textContent = 'FPS: ' + fps.toFixed(1);
+                return fps;
+            }
+
+            animate(0);
+        }
+
+        main();
+    </script>
+</body>
+
+</html>
