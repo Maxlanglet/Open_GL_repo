@@ -5,14 +5,7 @@
 </head>
 
 <body>
-    <h1>Light - Diffuse Gouraud</h1>
-    <p>Implement Gouraud shading on a sphere</p>
-    <ul>
-        <li>You need to make the sphere and export it from Blender</li>
-        <li>Don't forget to put the light somewhere in the scene (it's a vec3 sent to the shader)</li>
-        <li>Don't forget that normals are NOT vectors but unitary vectors, they transform as described in the slides!</li>
-    </ul>
-    <canvas id="webgl_canvas" width="500" height="500"></canvas>
+    <canvas id="webgl_canvas" width="1400" height="800"></canvas>
     <div id="fps"></div>
     <div id="camera_mat"></div>
     <div id="proj_mat"></div>
@@ -77,7 +70,7 @@
             var shader_gouraud = make_shader(gl, sourceV, sourceF);
             
             // loading the object from a file
-            var car = await load_obj('../objects/Muscle/muscle_little.obj');
+            var car = await load_obj('../objects/vac.obj');
             // Asynchronous call, we waited till the object was ready
             // Make the buffer and the functions to draw the object:
             var s1_mesh = await make_object(gl, car)
@@ -88,14 +81,14 @@
 
             
             // We define a light in space and retrieve its ID in the shader
-            const light_pos = glMatrix.vec3.fromValues(1.0, 0.0, -1.8);
+            const light_pos = glMatrix.vec3.fromValues(10.0, 3.0, -1.8);
             const u_light_pos = gl.getUniformLocation(shader_gouraud.program, 'u_light_pos');
             
             // We need to send the inverse transpose of the model matrix for the model
             const u_itM = gl.getUniformLocation(shader_gouraud.program, 'itM');
             
             
-            position = glMatrix.vec3.fromValues(1, 0, -6.0)
+            position = glMatrix.vec3.fromValues(0.5, 0, -2.0)
             up = glMatrix.vec3.fromValues(0.0, 1.0, 0.0)
             yaw = -90.0
             pitch = 0.0
