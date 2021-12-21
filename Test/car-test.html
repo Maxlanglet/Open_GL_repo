@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+</head>
+<body>
+    <canvas id="webgl_canvas" width="500" height="500"></canvas>
+	<div id="fps"></div>
+    <div id="camera_mat"></div>
+    <div id="proj_mat"></div>
+
+	<script src="../Utilities/gl-matrix-min.js"></script>
+    <script language="javascript" type="text/javascript" src="../Utilities/camera.js"></script>
+    <script language="javascript" type="text/javascript" src="../Utilities/shaders.js"></script>
+    <script language="javascript" type="text/javascript" src="../Utilities/textures.js"></script>
+    <script language="javascript" type="text/javascript" src="../Utilities/objects_02.js"></script>
+    <script>
+        async function main() {
+            // Boilerplate code
+            const canvas = document.getElementById('webgl_canvas');
+            c_width = canvas.width
+            c_height = canvas.height
+            const gl = canvas.getContext('webgl');
+
+            // Enable tests for better rendering
+            gl.enable(gl.DEPTH_TEST);
+            //gl.enable(gl.CULL_FACE); // cull hidden faces behind normals!
+
+            const sourceV = `
+      attribute vec3 position;
+      attribute vec2 texcoord;
+      attribute vec3 normal;
+
+      uniform mat4 M;
+      uniform mat4 V;
+      uniform mat4 P;
+      uniform mat4 itM;
+
+      varying vec3 v_norm;
+      varying vec2 tex;
+      varying vec4 frag_coord;
+      void main() {
+        // 2) Shader code
+        frag_coord = M*vec4(position, 1.0);
+        gl_Position = P*V*frag_coord;
+
+        v_norm = vec3(itM*vec4(normal,1));
+        tex = texcoord;
+      }
+    `;
+
+            const sourceF = `
+      precision mediump float;
+
+      uniform vec3 light;
+      varying vec3 v_norm;
+      varying vec4 frag_coord;
+      varying vec2 tex;
+      void main() {
+        // 2) Shader code
+        vec3 color = vec3(0.25,0.78,0.65);
+
+        vec3 light_v = normalize(light - frag_coord.xyz);
+        float diff_l = max(0.0,dot(v_norm,light_v));
+
+        vec3 ambient_light = vec3(0.15);
+        vec3 emitted_light = vec3(0);
+        float dist_max = 4.0;
+        float att_coef = (dist_max-distance(light,frag_coord.xyz))/dist_max;
+        vec3 total_light = ambient_light + emitted_light + vec3(diff_l)*color*att_coef;
+        gl_FragColor = vec4(total_light,1.0);
+       }
+    `;
+
+            var shader = make_shader(gl, sourceV, sourceF);
+
+            // 1) Load an object
+            var car = await load_obj('../Objects/Muscle/muscle_little.obj');
+            var car_obj = await make_object(gl, car)
+            // 3) Define all the variables you will need to perform the computations
+            //    in the shaders here! (light, useful matrices, ...)
+            light = glMatrix.vec3.fromValues(1.0,0,-1.8)
+            light_loc = gl.getUniformLocation(shader_gouraud.program,"light")
+            u_itM = gl.getUniformLocation(shader_gouraud.program,"itM")
+
+            position = glMatrix.vec3.fromValues(1, 0, -6.0)
+            up = glMatrix.vec3.fromValues(0.0, 1.0, 0.0)
+            yaw = -90.0
+            pitch = 0.0
+            var camera = make_camera(canvas, position, up, yaw, pitch)
+            var projection = camera.get_projection(45.0, c_width / c_height, 0.01, 100.0)
+
+            var deltaTime = 0;
+
+            function animate(time) {
+                deltaTime += 0.005;
+                camera.update(deltaTime);
+                //Draw loop
+                gl.clearColor(0.5, 0.5, 0.5, 1);
+                gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+                // 4) Write the code to draw the scene
+                //    Don't forget to send all elements you need in the shaders!
+                shader.use();
+
+                var unif = shader.get_uniforms();
+                light = glMatrix.vec3.fromValues(1.0,0.0,-(deltaTime%4.0))
+                gl.uniform3fv(light_loc,light);
+                view = camera.get_view_matrix();
+                gl.uniformMatrix4fv(unif['view'], false, view);
+                gl.uniformMatrix4fv(unif['proj'], false, projection);
+
+                car_obj.activate(shader);
+                gl.uniformMatrix4fv(unif['model'], false, car_obj.model);
+                var itM = glMatrix.mat4.create();
+                itM = glMatrix.mat4.invert(itM, car_obj.model);
+                itM = glMatrix.mat4.transpose(itM, itM);
+                gl.uniformMatrix4fv(u_itM, false, itM);
+                car_obj.draw()
+
+                fps(time);
+                window.requestAnimationFrame(animate); // While(True) loop!
+            }
+
+		var prev = 0
+		const fpsElem = document.querySelector("#fps");
+		function fps(now) {
+			now *= 0.001;
+			const deltaTime = now - prev;
+			prev = now;
+			const fps = 1 / deltaTime;
+			fpsElem.textContent = 'FPS: ' + fps.toFixed(1);
+			return fps;
+		}
+
+		animate(0);
+	  };
+
+	</script>
+</body>
+</html>
+
+
