@@ -3,7 +3,7 @@
 <head>
 </head>
 <body>
-    <canvas id="webgl_canvas" width="500" height="500"></canvas>
+    <canvas id="webgl_canvas" width="1280" height="720"></canvas>
 	<div id="fps"></div>
     <div id="camera_mat"></div>
     <div id="proj_mat"></div>
@@ -29,46 +29,38 @@
       attribute vec3 position;
       attribute vec2 texcoord;
       attribute vec3 normal;
+      varying vec3 v_diffuse;
 
       uniform mat4 M;
+      uniform mat4 itM;  // inverse transpose model!
       uniform mat4 V;
       uniform mat4 P;
-      uniform mat4 itM;
 
-      varying vec3 v_norm;
-      varying vec2 tex;
-      varying vec4 frag_coord;
+      uniform vec3 u_light_pos;
+
       void main() {
-        // 2) Shader code
-        frag_coord = M*vec4(position, 1.0);
+        vec4 frag_coord = M*vec4(position, 1.0);
         gl_Position = P*V*frag_coord;
 
-        v_norm = vec3(itM*vec4(normal,1));
-        tex = texcoord;
+        // Transform correctly the normals!
+        vec3 norm = vec3(itM * vec4(normal, 1.0));
+
+        // Gouraud: let's compute the diffuse light with the normals at the vertices
+        vec3 L = normalize(u_light_pos - frag_coord.xyz);
+        float diffusion = max(0.0, dot(norm, L));
+        v_diffuse = vec3(diffusion); // same component on every direction
+
       }
     `;
 
             const sourceF = `
       precision mediump float;
+      varying vec3 v_diffuse;
 
-      uniform vec3 light;
-      varying vec3 v_norm;
-      varying vec4 frag_coord;
-      varying vec2 tex;
       void main() {
-        // 2) Shader code
-        vec3 color = vec3(0.25,0.78,0.65);
-
-        vec3 light_v = normalize(light - frag_coord.xyz);
-        float diff_l = max(0.0,dot(v_norm,light_v));
-
-        vec3 ambient_light = vec3(0.15);
-        vec3 emitted_light = vec3(0);
-        float dist_max = 4.0;
-        float att_coef = (dist_max-distance(light,frag_coord.xyz))/dist_max;
-        vec3 total_light = ambient_light + emitted_light + vec3(diff_l)*color*att_coef;
-        gl_FragColor = vec4(total_light,1.0);
-       }
+        vec3 color = vec3(v_diffuse);
+        gl_FragColor = vec4(color, 1.0);
+      }
     `;
 
             var shader = make_shader(gl, sourceV, sourceF);
@@ -78,9 +70,9 @@
             var car_obj = await make_object(gl, car)
             // 3) Define all the variables you will need to perform the computations
             //    in the shaders here! (light, useful matrices, ...)
-            light = glMatrix.vec3.fromValues(1.0,0,-1.8)
-            light_loc = gl.getUniformLocation(shader_gouraud.program,"light")
-            u_itM = gl.getUniformLocation(shader_gouraud.program,"itM")
+            u_itM = gl.getUniformLocation(shader.program,"itM")
+            const light_pos = glMatrix.vec3.fromValues(1.0, 0.0, -1.8);
+            const u_light_pos = gl.getUniformLocation(shader.program, 'u_light_pos');
 
             position = glMatrix.vec3.fromValues(1, 0, -6.0)
             up = glMatrix.vec3.fromValues(0.0, 1.0, 0.0)
@@ -103,11 +95,11 @@
                 shader.use();
 
                 var unif = shader.get_uniforms();
-                light = glMatrix.vec3.fromValues(1.0,0.0,-(deltaTime%4.0))
-                gl.uniform3fv(light_loc,light);
                 view = camera.get_view_matrix();
                 gl.uniformMatrix4fv(unif['view'], false, view);
                 gl.uniformMatrix4fv(unif['proj'], false, projection);
+
+                gl.uniform3fv(u_light_pos, light_pos);
 
                 car_obj.activate(shader);
                 gl.uniformMatrix4fv(unif['model'], false, car_obj.model);
@@ -134,7 +126,7 @@
 
 		animate(0);
 	  };
-
+        main();
 	</script>
 </body>
 </html>
