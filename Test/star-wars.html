@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+</head>
+<body>
+<canvas id="webgl_canvas" width="1280" height="720"></canvas>
+<div id="fps"></div>
+<div id="camera_mat"></div>
+<div id="proj_mat"></div>
+
+<script src="../Utilities/gl-matrix-min.js"></script>
+<script language="javascript" type="text/javascript" src="../Utilities/camera.js"></script>
+<script language="javascript" type="text/javascript" src="../Utilities/shaders.js"></script>
+<script language="javascript" type="text/javascript" src="../Utilities/textures.js"></script>
+<script language="javascript" type="text/javascript" src="../Utilities/objects_02.js"></script>
+<script>
+    async function main() {
+        // Boilerplate code
+        const canvas = document.getElementById('webgl_canvas');
+        c_width = canvas.width
+        c_height = canvas.height
+        const gl = canvas.getContext('webgl');
+
+        // Enable tests for better rendering
+        gl.enable(gl.DEPTH_TEST);
+        //gl.enable(gl.CULL_FACE); // cull hidden faces behind normals!
+
+        const sourceV = `
+      attribute vec3 position;
+      attribute vec2 texcoord;
+      attribute vec3 normal;
+      varying vec3 v_diffuse;
+
+      uniform mat4 M;
+      uniform mat4 itM;  // inverse transpose model!
+      uniform mat4 V;
+      uniform mat4 P;
+
+      uniform vec3 u_light_pos;
+
+      void main() {
+        vec4 frag_coord = M*vec4(position, 1.0);
+        gl_Position = P*V*frag_coord;
+
+        // Transform correctly the normals!
+        vec3 norm = vec3(itM * vec4(normal, 1.0));
+
+        // Gouraud: let's compute the diffuse light with the normals at the vertices
+        vec3 L = normalize(u_light_pos - frag_coord.xyz);
+        float diffusion = max(0.0, dot(norm, L));
+        v_diffuse = vec3(diffusion); // same component on every direction
+
+      }
+    `;
+
+        const sourceF = `
+      precision mediump float;
+      varying vec3 v_diffuse;
+
+      void main() {
+        vec3 color = vec3(v_diffuse);
+        gl_FragColor = vec4(color, 1.0);
+      }
+    `;
+
+        var shader = make_shader(gl, sourceV, sourceF);
+
+        // 1) Load an object
+        var wall = await load_obj('../Objects/Room-SW/Mesh/interieur_sw.obj');
+        var wall_obj = await make_object(gl, wall)
+        var seat = await load_obj('../Objects/Room-SW/Mesh/seat.obj');
+        var seat_obj = await make_object(gl, seat)
+        // 3) Define all the variables you will need to perform the computations
+        //    in the shaders here! (light, useful matrices, ...)
+        u_itM = gl.getUniformLocation(shader.program,"itM")
+        const light_pos = glMatrix.vec3.fromValues(1.0, 0.0, -1.8);
+        const u_light_pos = gl.getUniformLocation(shader.program, 'u_light_pos');
+
+        position = glMatrix.vec3.fromValues(1, 0, -6.0)
+        up = glMatrix.vec3.fromValues(0.0, 1.0, 0.0)
+        yaw = -90.0
+        pitch = 0.0
+        var camera = make_camera(canvas, position, up, yaw, pitch)
+        var projection = camera.get_projection(45.0, c_width / c_height, 0.01, 100.0)
+
+        var deltaTime = 0;
+
+        function animate(time) {
+            deltaTime += 0.005;
+            camera.update(deltaTime);
+            //Draw loop
+            gl.clearColor(0.5, 0.5, 0.5, 1);
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+            // 4) Write the code to draw the scene
+            //    Don't forget to send all elements you need in the shaders!
+            shader.use();
+
+            var unif = shader.get_uniforms();
+            view = camera.get_view_matrix();
+            gl.uniformMatrix4fv(unif['view'], false, view);
+            gl.uniformMatrix4fv(unif['proj'], false, projection);
+
+            gl.uniform3fv(u_light_pos, light_pos);
+
+            wall_obj.activate(shader);
+            gl.uniformMatrix4fv(unif['model'], false, wall_obj.model);
+            var itM = glMatrix.mat4.create();
+            itM = glMatrix.mat4.invert(itM, wall_obj.model);
+            itM = glMatrix.mat4.transpose(itM, itM);
+            gl.uniformMatrix4fv(u_itM, false, itM);
+            wall_obj.draw()
+
+            seat_obj.activate(shader);
+            gl.uniformMatrix4fv(unif['model'], false, seat_obj.model);
+            var itM = glMatrix.mat4.create();
+            itM = glMatrix.mat4.invert(itM, seat_obj.model);
+            itM = glMatrix.mat4.transpose(itM, itM);
+            gl.uniformMatrix4fv(u_itM, false, itM);
+            seat_obj.draw()
+
+            fps(time);
+            window.requestAnimationFrame(animate); // While(True) loop!
+        }
+
+        var prev = 0
+        const fpsElem = document.querySelector("#fps");
+        function fps(now) {
+            now *= 0.001;
+            const deltaTime = now - prev;
+            prev = now;
+            const fps = 1 / deltaTime;
+            fpsElem.textContent = 'FPS: ' + fps.toFixed(1);
+            return fps;
+        }
+
+        animate(0);
+    };
+    main();
+</script>
+</body>
+</html>
+
+

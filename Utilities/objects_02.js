@@ -1,4 +1,4 @@
-var load_obj = async function(name = 'bunny_small.obj') {
+var load_obj = async function(name = 'bunny_small.obj',is_multiple=0) {
     async function load_mesh(string) {
       var lines = string.split("\n");
       var positions = [];
@@ -82,20 +82,36 @@ var load_obj = async function(name = 'bunny_small.obj') {
         num_triangles: vertexCount
       };
     }
-    
-    const response = await fetch(name);
-    const text = await response.text();
-    
-    const ret = await load_mesh(text);
 
+    if (is_multiple === 0){
+        const response = await fetch(name);
+        var text = await response.text();
+        var ret = await load_mesh(text);}
+    else {
+        var ret = []
+        for (var i = 1; i <= is_multiple; i++) {
+            var tmp = name.split(".obj")[0] + i.toString() + ".obj"
+            const response = await fetch(tmp);
+            var text = await response.text();
+            ret.push(await load_mesh(text))
+        }
+    }
     return ret;
 }
-    
+
+var make_objects = async function(gl, objs) {
+    var mesh = []
+    for(var i = 0;i<objs.length;i++){
+        var obj = await objs[i]
+        mesh.push(await make_object(gl,obj))
+    }
+    return mesh
+}
 
 var make_object = async function(gl, obj) {
     // We need the object to be ready to proceed:
     obj = await obj;
-    
+
     const buffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.bufferData(gl.ARRAY_BUFFER, obj.buffer, gl.STATIC_DRAW);
@@ -115,11 +131,11 @@ var make_object = async function(gl, obj) {
         const att_textcoord = gl.getAttribLocation(shader.program, "texcoord");
         gl.enableVertexAttribArray(att_textcoord);
         gl.vertexAttribPointer(att_textcoord, 2, gl.FLOAT, false, 8 * sizeofFloat, 3 * sizeofFloat);
-    
+
         const att_nor = gl.getAttribLocation(shader.program, 'normal');
         gl.enableVertexAttribArray(att_nor);
         gl.vertexAttribPointer(att_nor, 3, gl.FLOAT, false, 8 * sizeofFloat, 5 * sizeofFloat);
-        
+
     }
 
     function draw() {
