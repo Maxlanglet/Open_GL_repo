@@ -16,8 +16,8 @@ var make_camera = function(canvas, position, up, yaw, pitch,f=glMatrix.vec3.from
     // Euler angles
     var yaw = 90.0;
     var pitch = 0.0;
-    var movement_speed = 0.15;
-    var mouse_sensitivity = 1.5;
+    var movement_speed = 0.015;
+    var mouse_sensitivity = 0.15;
     var zoom = 0.0; // Not used anymore
 
     var dt = 0.0;
@@ -74,7 +74,6 @@ var make_camera = function(canvas, position, up, yaw, pitch,f=glMatrix.vec3.from
     }
 
     function register_mouse() {
-        /*
             // For the mighty and worthy students that want to make
             // rotations with the mouse, you can find here a starting code.
             function getMousePos(canvas, evt) {
@@ -86,7 +85,7 @@ var make_camera = function(canvas, position, up, yaw, pitch,f=glMatrix.vec3.from
              }
             canvas.addEventListener("mousemove", function( event ) {
                var pos = getMousePos(canvas, event);
-               x = pos.x - canvas.width / 2
+               x = canvas.width / 2 - pos.x
                y = pos.y - canvas.height / 2
                var dx = mouse_prev_x - x
                var dy = mouse_prev_y - y
@@ -95,7 +94,6 @@ var make_camera = function(canvas, position, up, yaw, pitch,f=glMatrix.vec3.from
                mouse_prev_x = x
                mouse_prev_y = y
              }, false);
-        */
     }
 
     function get_view_matrix() {
