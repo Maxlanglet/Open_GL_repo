@@ -15,6 +15,7 @@
 <script language="javascript" type="text/javascript" src="../Utilities/objects_02.js"></script>
 <script language="javascript" type="text/javascript" src="../Shaders/wall.js"></script>
 <script language="javascript" type="text/javascript" src="../Shaders/seat_all.js"></script>
+<script language="javascript" type="text/javascript" src="../Utilities/vacuum.js"></script>
 <script>
     async function main() {
         // Boilerplate code
@@ -47,13 +48,15 @@
 
         var vac_shader = make_shader(gl, (vac_shader_comps).shader_v,(vac_shader_comps).shader_f);
 
+        var vacuum = make_vacuum(vac, vac_obj, vac_shader_comps, vac_shader, gl);
+
         //Camera parameters
         position = glMatrix.vec3.fromValues(1, 0, -6.0)
         placeholder = glMatrix.vec3.fromValues(1, 0, -6.0)
         up = glMatrix.vec3.fromValues(0.0, 1.0, 0.0)
         yaw = -90.0
         pitch = 0.0
-        var camera = make_camera(canvas, position, up, yaw, pitch, vac_obj, vac_shader)
+        var camera = make_camera(canvas, position, up, yaw, pitch, vacuum);
         var projection = camera.get_projection(45.0, c_width / c_height, 0.01, 100.0)
 
 
@@ -80,13 +83,8 @@
             wall_shader_comps.shader_activate(wall_shader,wall_obj.model,unif['model']);
             wall_obj.draw();
 
-            vac_shader.use();
-            var unif = vac_shader.get_uniforms();
-            gl.uniformMatrix4fv(unif['view'], false, view);
-            gl.uniformMatrix4fv(unif['proj'], false, projection);
-            vac_obj.activate(vac_shader);
-            vac_shader_comps.shader_activate(vac_shader,vac_obj.model,unif['model']);
-            vac_obj.draw();
+
+            vacuum.draw(view, projection);
 
             seats_shader.use()
             var unif = seats_shader.get_uniforms();

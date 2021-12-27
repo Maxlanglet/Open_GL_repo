@@ -1,4 +1,4 @@
-var make_camera = function(canvas, position, up, yaw, pitch,f=glMatrix.vec3.fromValues(0, 0, 1.0), vac_obj, vac_shader) {
+var make_camera = function(canvas, position, up, yaw, pitch,f=glMatrix.vec3.fromValues(0, 0, 1.0), vac) {
 
     const CameraMovement = {
         FORWARD: 1,
@@ -13,8 +13,7 @@ var make_camera = function(canvas, position, up, yaw, pitch,f=glMatrix.vec3.from
     var right = glMatrix.vec3.create();
     var world_up = up;
 
-    var vac_obj = vac_obj;
-    var vac_shader = vac_shader;
+    var vac = vac;
 
     // Euler angles
     var yaw = 90.0;
@@ -122,10 +121,17 @@ var make_camera = function(canvas, position, up, yaw, pitch,f=glMatrix.vec3.from
         var velocity = movement_speed;// * dt;
         tmp = glMatrix.vec3.create()
         if (direction == CameraMovement.FORWARD) {
+            //essais pour rendre le deplacement plus fluide
+            // for (var i=0;i<100;i++){
+            //     tmp = glMatrix.vec3.scale(tmp, front, velocity/100.0);
+            //     position = glMatrix.vec3.add(position, position, tmp);
+            //     vac_shader.model = glMatrix.mat4.translate(vac_obj.model,vac_obj.model,tmp);
+            //     //position += front + velocity;
+            // }
             tmp = glMatrix.vec3.scale(tmp, front, velocity);
             position = glMatrix.vec3.add(position, position, tmp);
-            // vac_shader.model = glMatrix.mat4.translate(vac_obj.model,vac_obj.model,tmp);
-            //position += front + velocity;
+            //vac.translate(tmp);
+            
         }
         if (direction == CameraMovement.BACKWARD) {
             tmp = glMatrix.vec3.scale(tmp, front, velocity);
