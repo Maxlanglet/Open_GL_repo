@@ -16,7 +16,7 @@ var make_camera = function(canvas, position, up, yaw, pitch,f=glMatrix.vec3.from
     // Euler angles
     var yaw = 90.0;
     var pitch = 0.0;
-    var movement_speed = 0.015;
+    var movement_speed = 0.045;
     var mouse_sensitivity = 0.15;
     var zoom = 0.0; // Not used anymore
 
@@ -111,7 +111,7 @@ var make_camera = function(canvas, position, up, yaw, pitch,f=glMatrix.vec3.from
     }
 
     function process_keyboard(direction) {
-        var velocity = movement_speed * dt;
+        var velocity = movement_speed;
         tmp = glMatrix.vec3.create()
         if (direction == CameraMovement.FORWARD) {
             tmp = glMatrix.vec3.scale(tmp, front, velocity);

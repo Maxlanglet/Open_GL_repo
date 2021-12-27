@@ -31,19 +31,19 @@
         var lamb_objs_comps = [];
         var wall = await load_obj('../Objects/Room-SW/mesh/interieur_sw.obj');
         var wall_obj = await make_object(gl, wall);
-        var wall_shader_comps = await load_shader_lamb(gl,"../Objects/Room-SW/textures/Concreto_color.png");
+        var wall_shader_comps = await load_shader_lamb(gl,"../Objects/Room-SW/textures/Concreto_color.png",coef_refl=0.2);
         lamb_objs.push(wall_obj);
         lamb_objs_comps.push(wall_shader_comps);
 
         var seats = await load_obj("../Objects/Room-SW/mesh/seat/seat_.obj",20);
         var seats_obj = await make_objects(gl,seats);
-        var seats_shader_comps = await load_shader_lamb(gl,"../Objects/Room-SW/textures/MaterialSofa_Base_color.png");
+        var seats_shader_comps = await load_shader_lamb(gl,"../Objects/Room-SW/textures/MaterialSofa_Base_color.png",coef_refl=0.2);
         lamb_objs.push(seats_obj);
         lamb_objs_comps.push(seats_shader_comps);
 
         var tables = await load_obj("../Objects/Room-SW/mesh/table/table_.obj",10);
         var tables_obj = await make_objects(gl,tables);
-        var tables_shader_comps = await load_shader_lamb(gl,"../Objects/Room-SW/textures/MaterialMesa_Base_color.png");
+        var tables_shader_comps = await load_shader_lamb(gl,"../Objects/Room-SW/textures/MaterialMesa_Base_color.png",coef_refl=0.2);
         lamb_objs.push(tables_obj);
         lamb_objs_comps.push(tables_shader_comps);
 
@@ -55,13 +55,13 @@
 
         var floor = await load_obj("../Objects/Room-SW/mesh/sol.obj");
         var floor_obj = await make_object(gl,floor);
-        var floor_shader_comps = await load_shader_lamb(gl,"../Objects/Room-SW/textures/Solo_Color.jpg");
+        var floor_shader_comps = await load_shader_lamb(gl,"../Objects/Room-SW/textures/Concreto_color.png",coef_refl=0.2);
         lamb_objs.push(floor_obj);
         lamb_objs_comps.push(floor_shader_comps);
 
         var barrils = await load_obj("../Objects/Room-SW/mesh/barril/barril_.obj",10);
         var barrils_obj = await make_objects(gl,barrils);
-        var barrils_shader_comps = await load_shader_lamb(gl,"../Objects/Room-SW/textures/Material_Barril_base_Color.png");
+        var barrils_shader_comps = await load_shader_lamb(gl,"../Objects/Room-SW/textures/Material_Barril_base_Color.png",coef_refl=0.2);
         lamb_objs.push(barrils_obj);
         lamb_objs_comps.push(barrils_shader_comps);
 
@@ -101,6 +101,18 @@
         lamb_objs.push(vac_obj);
         lamb_objs_comps.push(vac_shader_comps);
 
+        var boxes = await load_obj("../Objects/Room-SW/mesh/boxes.obj");
+        var boxes_obj = await make_object(gl,boxes);
+        var boxes_shader_comps = await load_shader_lamb(gl,"../Objects/Room-SW/textures/Material_Caixote_Base_Color.png");
+        lamb_objs.push(boxes_obj);
+        lamb_objs_comps.push(boxes_shader_comps);
+
+        var lights = await load_obj("../Objects/Room-SW/mesh/lights/light_.obj",9);
+        var lights_obj = await make_objects(gl,lights);
+        var lights_shader_comps = await load_shader_lamb(gl,"../Objects/Room-SW/textures/Yellow.png",coef_emit=100.0);
+        lamb_objs.push(lights_obj);
+        lamb_objs_comps.push(lights_shader_comps);
+
         //Different shaders here
         var shader_lamb = make_shader(gl, shader_V_lamb,shader_F_lamb);
         //Define what needed
@@ -134,13 +146,13 @@
                 if(lamb_objs[i] instanceof Array){
                     for(var j =0; j<lamb_objs[i].length;j++){
                         (lamb_objs[i][j]).activate(shader_lamb);
-                        lamb_objs_comps[i].shader_activate(shader_lamb,lamb_objs[i][j],unif['model']);
+                        lamb_objs_comps[i].shader_activate(shader_lamb,lamb_objs[i][j],unif['model'],camera.get_position());
                         lamb_objs[i][j].draw();
                     }
                 }
                 else{
                     lamb_objs[i].activate(shader_lamb);
-                    lamb_objs_comps[i].shader_activate(shader_lamb,lamb_objs[i],unif['model']);
+                    lamb_objs_comps[i].shader_activate(shader_lamb,lamb_objs[i],unif['model'],camera.get_position());
                     lamb_objs[i].draw();
                 }
             }
