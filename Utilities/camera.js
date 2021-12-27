@@ -89,7 +89,6 @@ var make_camera = function(canvas, position, up, yaw, pitch,f=glMatrix.vec3.from
                y = pos.y - canvas.height / 2
                var dx = mouse_prev_x - x
                var dy = mouse_prev_y - y
-               console.log(dx, dy)
                process_mouse_movement(dx, dy)
                mouse_prev_x = x
                mouse_prev_y = y
