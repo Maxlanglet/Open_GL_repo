@@ -13,11 +13,13 @@ var make_camera = function(canvas, position, up, yaw, pitch,f=glMatrix.vec3.from
     var right = glMatrix.vec3.create();
     var world_up = up;
 
+    var vac = vac;
+
     // Euler angles
     var yaw = 90.0;
     var pitch = 0.0;
-    var movement_speed = 0.045;
-    var mouse_sensitivity = 0.15;
+    var movement_speed = 0.5;
+    var mouse_sensitivity = 0.5;
     var zoom = 0.0; // Not used anymore
 
     var dt = 0.0;
@@ -52,6 +54,10 @@ var make_camera = function(canvas, position, up, yaw, pitch,f=glMatrix.vec3.from
                 process_keyboard(CameraMovement.LEFT);
                 return;
             } else if (key === 'd' || key === '6' || key === 'i') {
+                process_keyboard(CameraMovement.RIGHT);
+                return;
+            } else if (key === 'z' && key == 'd'){
+                process_keyboard(CameraMovement.FORWARD);
                 process_keyboard(CameraMovement.RIGHT);
                 return;
             }
@@ -111,12 +117,15 @@ var make_camera = function(canvas, position, up, yaw, pitch,f=glMatrix.vec3.from
     }
 
     function process_keyboard(direction) {
-        var velocity = movement_speed;
+        var velocity = movement_speed;// * dt;
         tmp = glMatrix.vec3.create()
         if (direction == CameraMovement.FORWARD) {
             tmp = glMatrix.vec3.scale(tmp, front, velocity);
             position = glMatrix.vec3.add(position, position, tmp);
-            //position += front + velocity;
+            vac.translate(tmp);
+            console.log(vac);
+            //vac_shader.model = glMatrix.mat4.translate(vac_obj.model,vac_obj.model,tmp);
+
         }
         if (direction == CameraMovement.BACKWARD) {
             tmp = glMatrix.vec3.scale(tmp, front, velocity);
@@ -181,14 +190,14 @@ var make_camera = function(canvas, position, up, yaw, pitch,f=glMatrix.vec3.from
         fz = Math.sin(yawr) * Math.cos(pitchr);
 
         front = glMatrix.vec3.fromValues(fx, fy, fz);
-        front = glMatrix.vec3.normalize(front, front);
+        //front = glMatrix.vec3.normalize(front, front);
 
         // recompute right, up
         right = glMatrix.vec3.cross(right, front, world_up);
-        right = glMatrix.vec3.normalize(right, right);
+        //right = glMatrix.vec3.normalize(right, right);
 
-        up = glMatrix.vec3.cross(up, right, front);
-        up = glMatrix.vec3.normalize(up, up);
+        //up = glMatrix.vec3.cross(up, right, front);
+        //up = glMatrix.vec3.normalize(up, up);
     }
     
     function get_position() {

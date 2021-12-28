@@ -5,8 +5,6 @@ var load_obj = async function(name = 'bunny_small.obj',is_multiple=0) {
       var normals = [];
       var textures = [];
       var vertices = [];
-
-      console.log("Lines : ", lines.length);
      
       for ( var i = 0 ; i < lines.length ; i++ ) {
         var parts = lines[i].trimRight().split(' ');
@@ -75,8 +73,8 @@ var load_obj = async function(name = 'bunny_small.obj',is_multiple=0) {
         }
       }
       var vertexCount = vertices.length / 8;// /8 because 3+2+3 dimensions for position/texture/normal
-      console.log("Vertices : ", vertices.length);
-      console.log("Loaded mesh with " + vertexCount + " vertices");
+      // console.log("Vertices : ", vertices.length);
+      // console.log("Loaded mesh with " + vertexCount + " vertices");
       return {
         buffer: new Float32Array(vertices),
         num_triangles: vertexCount
