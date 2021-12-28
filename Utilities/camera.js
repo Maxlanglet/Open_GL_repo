@@ -1,4 +1,4 @@
-var make_camera = function(canvas, position, up, yaw, pitch,f=glMatrix.vec3.fromValues(0, 0, 1.0), vac) {
+var make_camera = function(canvas, position, up, yaw, pitch,vac,f=glMatrix.vec3.fromValues(0, 0, 1.0)) {
 
     const CameraMovement = {
         FORWARD: 1,
@@ -130,7 +130,9 @@ var make_camera = function(canvas, position, up, yaw, pitch,f=glMatrix.vec3.from
             // }
             tmp = glMatrix.vec3.scale(tmp, front, velocity);
             position = glMatrix.vec3.add(position, position, tmp);
-            //vac.translate(tmp);
+            vac.translate(tmp);
+            console.log(vac);
+            //vac_shader.model = glMatrix.mat4.translate(vac_obj.model,vac_obj.model,tmp);
             
         }
         if (direction == CameraMovement.BACKWARD) {
@@ -151,7 +153,7 @@ var make_camera = function(canvas, position, up, yaw, pitch,f=glMatrix.vec3.from
             // vac_shader.model = glMatrix.mat4.translate(vac_obj.model,vac_obj.model,tmp);
             //position += right + velocity;
         }
-        console.log(position);
+        //console.log(position);
     }
 
     function process_mouse_movement(xoffset, yoffset, constrain_pitch = true) {

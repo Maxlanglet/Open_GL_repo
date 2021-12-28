@@ -48,7 +48,7 @@
 
         var vac_shader = make_shader(gl, (vac_shader_comps).shader_v,(vac_shader_comps).shader_f);
 
-        var vacuum = make_vacuum(vac, vac_obj, vac_shader_comps, vac_shader, gl);
+        var vacuum = await make_vacuum(vac, vac_obj, vac_shader_comps, vac_shader, gl);
 
         //Camera parameters
         position = glMatrix.vec3.fromValues(1, 0, -6.0)

@@ -1,12 +1,10 @@
-function make_vacuum(vac, vac_obj, vac_shader_comps, vac_shader, gl, camera){
+var make_vacuum=function(vac, vac_obj, vac_shader_comps, vac_shader, gl){
 
 	var vac = vac;
     var vac_obj = vac_obj;
     var vac_shader_comps = vac_shader_comps;
     var vac_shader = vac_shader;
     var gl = gl;
-
-    var camera = camera;
 
     function draw(view, projection){
     	vac_shader.use();
@@ -25,7 +23,7 @@ function make_vacuum(vac, vac_obj, vac_shader_comps, vac_shader, gl, camera){
     }
 	
     function translate(tmp){
-    	vac_shader.model = glMatrix.mat4.add(vac_obj.model,vac_obj.model,tmp);
+    	vac_shader.model = glMatrix.mat4.translate(vac_obj.model,vac_obj.model,tmp);
     }
 
 
