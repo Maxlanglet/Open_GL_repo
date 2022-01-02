@@ -1,9 +1,10 @@
-var make_vacuum=function(vac, vac_obj, vac_shader_comps, vac_shader, gl){
+var make_vacuum=function(vac, vac_obj, vac_shader_comps, vac_shader, vac_pos, gl){
 
 	var vac = vac;
     var vac_obj = vac_obj;
     var vac_shader_comps = vac_shader_comps;
     var vac_shader = vac_shader;
+    var vac_pos = vac_pos;
     var gl = gl;
 
     function draw(view, projection){
@@ -17,6 +18,9 @@ var make_vacuum=function(vac, vac_obj, vac_shader_comps, vac_shader, gl){
     }
 
 
+    function get_pos(){
+    	return vac_pos;
+    }
 
     function get_shader(){
     	return vac_shader;
@@ -24,6 +28,10 @@ var make_vacuum=function(vac, vac_obj, vac_shader_comps, vac_shader, gl){
 	
     function translate(tmp){
     	vac_shader.model = glMatrix.mat4.translate(vac_obj.model,vac_obj.model,tmp);
+    	vac_pos = glMatrix.vec3.add(vac_pos, vac_pos, tmp);
+
+    	console.log('vac_pos', vac_pos);
+
     }
 
 
@@ -31,5 +39,6 @@ var make_vacuum=function(vac, vac_obj, vac_shader_comps, vac_shader, gl){
 		translate: translate,
 		draw: draw,
 		get_shader: get_shader,
+		get_pos: get_pos,
 	}
 }

@@ -104,7 +104,11 @@ var make_camera = function(canvas, position, up, yaw, pitch,vac,f=glMatrix.vec3.
 
     function get_view_matrix() {
         center = glMatrix.vec3.create();
-        center = glMatrix.vec3.add(center, position, front);
+
+        var vac_pos = vac.get_pos();
+
+        //vac_pos = glMatrix.mat3.add(vac_pos,vac_pos,glMatrix.vec3.fromValues(-0.5,0.0,2.0));
+        center = glMatrix.vec3.add(center, vac_pos, front);
         View = glMatrix.mat4.create();
         View = glMatrix.mat4.lookAt(View, position, center, up);
         return View;
@@ -131,29 +135,35 @@ var make_camera = function(canvas, position, up, yaw, pitch,vac,f=glMatrix.vec3.
             tmp = glMatrix.vec3.scale(tmp, front, velocity);
             position = glMatrix.vec3.add(position, position, tmp);
             vac.translate(tmp);
-            console.log(vac);
             //vac_shader.model = glMatrix.mat4.translate(vac_obj.model,vac_obj.model,tmp);
             
         }
         if (direction == CameraMovement.BACKWARD) {
             tmp = glMatrix.vec3.scale(tmp, front, velocity);
             position = glMatrix.vec3.sub(position, position, tmp);
+
+            tmp = glMatrix.vec3.negate(tmp,tmp);
+            vac.translate(tmp);
             // vac_shader.model = glMatrix.mat4.translate(vac_obj.model,vac_obj.model,tmp);
             //position -= front + velocity;
         }
         if (direction == CameraMovement.LEFT) {
             tmp = glMatrix.vec3.scale(tmp, right, velocity);
             position = glMatrix.vec3.sub(position, position, tmp);
+
+            tmp = glMatrix.vec3.negate(tmp,tmp);
+            vac.translate(tmp);
             // vac_shader.model = glMatrix.mat4.translate(vac_obj.model,vac_obj.model,tmp);
             //position -= right + velocity;
         }
         if (direction == CameraMovement.RIGHT) {
             tmp = glMatrix.vec3.scale(tmp, right, velocity);
             position = glMatrix.vec3.add(position, position, tmp);
+            vac.translate(tmp);
             // vac_shader.model = glMatrix.mat4.translate(vac_obj.model,vac_obj.model,tmp);
             //position += right + velocity;
         }
-        //console.log(position);
+        console.log("position", position);
     }
 
     function process_mouse_movement(xoffset, yoffset, constrain_pitch = true) {
