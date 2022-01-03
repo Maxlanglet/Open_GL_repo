@@ -136,41 +136,43 @@ var make_camera = function(canvas, position, up, yaw, pitch,vac) {
 
     function process_keyboard(direction) {
         var velocity = movement_speed;// * dt;
-        tmp = glMatrix.vec3.create()
-        let trans_vac = glMatrix.vec3.create();
+        let tmp = glMatrix.vec3.create();
         if (direction == CameraMovement.FORWARD) {
+            tmp = glMatrix.vec3.scale(tmp, front_origin, velocity);
+            vac.translate_model(tmp);
             tmp = glMatrix.vec3.scale(tmp, front, velocity);
             position = glMatrix.vec3.add(position, position, tmp);
-            trans_vac = glMatrix.vec3.scale(trans_vac, front_origin, velocity);
-            vac.translate(tmp,trans_vac);
-            //vac_shader.model = glMatrix.mat4.translate(vac_obj.model,vac_obj.model,tmp);
+            vac.translate_pos(tmp);
             
         }
         if (direction == CameraMovement.BACKWARD) {
-            tmp = glMatrix.vec3.scale(tmp, front, velocity);
-            position = glMatrix.vec3.sub(position, position, tmp);
-
+            tmp = glMatrix.vec3.scale(tmp, front_origin, velocity);
             tmp = glMatrix.vec3.negate(tmp,tmp);
-            trans_vac = glMatrix.vec3.scale(trans_vac, front_origin, velocity);
-            vac.translate(tmp,trans_vac);
+            vac.translate_model(tmp);
+            tmp = glMatrix.vec3.scale(tmp, front, velocity);
+            tmp = glMatrix.vec3.negate(tmp,tmp);
+            position = glMatrix.vec3.add(position, position, tmp);
+            vac.translate_pos(tmp);
             // vac_shader.model = glMatrix.mat4.translate(vac_obj.model,vac_obj.model,tmp);
             //position -= front + velocity;
         }
         if (direction == CameraMovement.LEFT) {
-            tmp = glMatrix.vec3.scale(tmp, right, velocity);
-            position = glMatrix.vec3.sub(position, position, tmp);
-
+            tmp = glMatrix.vec3.scale(tmp, right_origin, velocity);
             tmp = glMatrix.vec3.negate(tmp,tmp);
-            trans_vac = glMatrix.vec3.scale(trans_vac, front_origin, velocity);
-            vac.translate(tmp,trans_vac);;
+            vac.translate_model(tmp);
+            tmp = glMatrix.vec3.scale(tmp, right, velocity);
+            tmp = glMatrix.vec3.negate(tmp,tmp);
+            position = glMatrix.vec3.add(position, position, tmp);
+            vac.translate_pos(tmp);
             // vac_shader.model = glMatrix.mat4.translate(vac_obj.model,vac_obj.model,tmp);
             //position -= right + velocity;
         }
         if (direction == CameraMovement.RIGHT) {
+            tmp = glMatrix.vec3.scale(tmp, right_origin, velocity);
+            vac.translate_model(tmp);
             tmp = glMatrix.vec3.scale(tmp, right, velocity);
             position = glMatrix.vec3.add(position, position, tmp);
-            trans_vac = glMatrix.vec3.scale(trans_vac, front_origin, velocity);
-            vac.translate(tmp,trans_vac);
+            vac.translate_pos(tmp);
             // vac_shader.model = glMatrix.mat4.translate(vac_obj.model,vac_obj.model,tmp);
             //position += right + velocity;
         }
