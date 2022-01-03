@@ -26,6 +26,8 @@
             //gl.enable(gl.CULL_FACE); // cull hidden faces behind normals!
 
             const sourceV = `
+      #define NB_LIGHTS 1
+
       attribute vec3 position;
       attribute vec2 texcoord;
       attribute vec3 normal;
@@ -36,7 +38,7 @@
       uniform mat4 V;
       uniform mat4 P;
 
-      uniform vec3 u_light_pos;
+      uniform vec3 u_light_pos[NB_LIGHTS];
 
       void main() {
         vec4 frag_coord = M*vec4(position, 1.0);
@@ -46,8 +48,10 @@
         vec3 norm = vec3(itM * vec4(normal, 1.0));
 
         // Gouraud: let's compute the diffuse light with the normals at the vertices
-        vec3 L = normalize(u_light_pos - frag_coord.xyz);
-        float diffusion = max(0.0, dot(norm, L));
+        float diffusion = 0.0;
+        for(int i = 0; i<NB_LIGHTS;i++){
+            vec3 L = normalize(u_light_pos[i] - frag_coord.xyz);
+            diffusion += max(0.0, dot(norm, L));}
         v_diffuse = vec3(diffusion); // same component on every direction
 
       }
@@ -58,8 +62,7 @@
       varying vec3 v_diffuse;
 
       void main() {
-        vec3 color = vec3(v_diffuse);
-        gl_FragColor = vec4(color, 1.0);
+        gl_FragColor = vec4(v_diffuse, 1.0);
       }
     `;
 
@@ -72,7 +75,7 @@
             //    in the shaders here! (light, useful matrices, ...)
             u_itM = gl.getUniformLocation(shader.program,"itM")
             const light_pos = glMatrix.vec3.fromValues(1.0, 0.0, -1.8);
-            const u_light_pos = gl.getUniformLocation(shader.program, 'u_light_pos');
+            const u_light_pos = gl.getUniformLocation(shader.program, 'u_light_pos[0]');
 
             position = glMatrix.vec3.fromValues(1, 0, -6.0)
             up = glMatrix.vec3.fromValues(0.0, 1.0, 0.0)

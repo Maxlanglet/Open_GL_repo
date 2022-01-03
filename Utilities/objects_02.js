@@ -5,8 +5,6 @@ var load_obj = async function(name = 'bunny_small.obj',is_multiple=0) {
       var normals = [];
       var textures = [];
       var vertices = [];
-
-      console.log("Lines : ", lines.length);
      
       for ( var i = 0 ; i < lines.length ; i++ ) {
         var parts = lines[i].trimRight().split(' ');
@@ -75,8 +73,8 @@ var load_obj = async function(name = 'bunny_small.obj',is_multiple=0) {
         }
       }
       var vertexCount = vertices.length / 8;// /8 because 3+2+3 dimensions for position/texture/normal
-      console.log("Vertices : ", vertices.length);
-      console.log("Loaded mesh with " + vertexCount + " vertices");
+      // console.log("Vertices : ", vertices.length);
+      // console.log("Loaded mesh with " + vertexCount + " vertices");
       return {
         buffer: new Float32Array(vertices),
         num_triangles: vertexCount
@@ -88,25 +86,25 @@ var load_obj = async function(name = 'bunny_small.obj',is_multiple=0) {
         var text = await response.text();
         var ret = await load_mesh(text);}
     else {
-        var ret = []
+        var ret = [];
         for (var i = 1; i <= is_multiple; i++) {
-            var tmp = name.split(".obj")[0] + i.toString() + ".obj"
+            var tmp = name.split(".obj")[0] + i.toString() + ".obj";
             const response = await fetch(tmp);
             var text = await response.text();
             ret.push(await load_mesh(text))
         }
     }
     return ret;
-}
+};
 
 var make_objects = async function(gl, objs) {
-    var mesh = []
+    var mesh = [];
     for(var i = 0;i<objs.length;i++){
-        var obj = await objs[i]
+        var obj = await objs[i];
         mesh.push(await make_object(gl,obj))
     }
     return mesh
-}
+};
 
 var make_object = async function(gl, obj) {
     // We need the object to be ready to proceed:
@@ -118,7 +116,7 @@ var make_object = async function(gl, obj) {
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
     var Model = glMatrix.mat4.create();
-    Model = glMatrix.mat4.translate(Model, Model, glMatrix.vec3.fromValues(0.5, -0.5, -1.0));
+    //Model = glMatrix.mat4.translate(Model, Model, glMatrix.vec3.fromValues(0.5, -0.5, -1.0));
 
     function activate(shader) {
         // these object have all 3 positions + 2 textures + 3 normals
