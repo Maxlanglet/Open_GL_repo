@@ -112,7 +112,7 @@ var make_camera = function(canvas, position, up, yaw, pitch,vac,f=glMatrix.vec3.
 
         center = glMatrix.vec3.add(center, vac_pos, front);
 
-        center = glMatrix.vec3.add(center,center,glMatrix.vec3.fromValues(-0.5,0.0,2.0));
+        //center = glMatrix.vec3.add(center,center,glMatrix.vec3.fromValues(-0.5,0.0,2.0));
         View = glMatrix.mat4.create();
         View = glMatrix.mat4.lookAt(View, position, center, up);
         return View;
@@ -210,22 +210,43 @@ var make_camera = function(canvas, position, up, yaw, pitch,vac,f=glMatrix.vec3.
     }
 
     function update_camera_vectors() {
-        yawr = deg2rad(yaw)
-        pitchr = deg2rad(pitch)
 
-        fx = Math.cos(yawr)* Math.cos(pitchr);
-        fy = Math.sin(pitchr);
-        fz = Math.sin(yawr) * Math.cos(pitchr);
+        center = glMatrix.vec3.create();
 
-        front = glMatrix.vec3.fromValues(fx, fy, fz);
-        //front = glMatrix.vec3.normalize(front, front);
+        var vac_pos = vac.get_pos();
 
-        // recompute right, up
-        right = glMatrix.vec3.cross(right, front, world_up);
-        //right = glMatrix.vec3.normalize(right, right);
+        center = glMatrix.vec3.add(center, vac_pos, front);
 
-        //up = glMatrix.vec3.cross(up, right, front);
-        //up = glMatrix.vec3.normalize(up, up);
+        View = glMatrix.mat4.create();
+        View = glMatrix.mat4.lookAt(View, position, center, up);
+
+        // // move camera a distance r away from the center
+        // glTranslatef(0, 0, -r);
+
+        // // rotate 
+        // glRotatef(angley, 0, 1, 0);
+        // glRotatef(anglex, 1, 0, 0);
+
+        // // move to center of circle    
+        // glTranslatef(-cx, -cy, -cz)
+
+
+        // yawr = deg2rad(yaw)
+        // pitchr = deg2rad(pitch)
+
+        // fx = Math.cos(yawr)* Math.cos(pitchr);
+        // fy = Math.sin(pitchr);
+        // fz = Math.sin(yawr) * Math.cos(pitchr);
+
+        // front = glMatrix.vec3.fromValues(fx, fy, fz);
+        // //front = glMatrix.vec3.normalize(front, front);
+
+        // // recompute right, up
+        // right = glMatrix.vec3.cross(right, front, world_up);
+        // //right = glMatrix.vec3.normalize(right, right);
+
+        // //up = glMatrix.vec3.cross(up, right, front);
+        // //up = glMatrix.vec3.normalize(up, up);
     }
     
     function get_position() {
