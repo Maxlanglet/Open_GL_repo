@@ -125,21 +125,21 @@
         var shader_lamb = make_shader(gl, shader_V_lamb,shader_F_lamb);
         let shader_cubemap = make_shader(gl,shader_V_cubemap,shader_F_cubemap);
 
+        //place vacuum
+        var vac_pos =  glMatrix.vec3.fromValues(0,0.05,0);
+        var vacuum = await make_vacuum(vac_obj,vac_pos);
+        vacuum.translate_model(vac_pos);
+        vacuum.translate_pos(vac_pos);
+
         //Camera parameters
-        var vac_pos =  glMatrix.vec3.fromValues(0,0,0);
         let position = glMatrix.vec3.create();
         glMatrix.vec3.add(position,vac_pos,glMatrix.vec3.fromValues(0,0.5,-2.0));
 
         up = glMatrix.vec3.fromValues(0.0, 1.0, 0.0);
         yaw = -90.0;
         pitch = 0.0;
-        var camera = make_camera(canvas, position, up, yaw, pitch,vac_obj);
+        var camera = make_camera(canvas, position, up, yaw, pitch,vacuum);
         var projection = camera.get_projection(45.0, c_width / c_height, 0.01, 100.0);
-
-        //place vacuum
-        var vacuum = await make_vacuum(vac_obj);
-        vacuum.translate_model(vac_pos);
-        vacuum.translate_pos(vac_pos);
 
         var deltaTime = 0;
 
