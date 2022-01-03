@@ -95,7 +95,6 @@ var make_camera = function(canvas, position, up, yaw, pitch,vac,f=glMatrix.vec3.
                y = pos.y - canvas.height / 2
                var dx = mouse_prev_x - x
                var dy = mouse_prev_y - y
-               //console.log(dx, dy)
                process_mouse_movement(dx, dy)
                mouse_prev_x = x
                mouse_prev_y = y
@@ -104,15 +103,7 @@ var make_camera = function(canvas, position, up, yaw, pitch,vac,f=glMatrix.vec3.
 
     function get_view_matrix() {
         center = glMatrix.vec3.create();
-
-        var vac_pos = vac.get_pos();
-
-        //vac_pos = glMatrix.mat3.add(vac_pos,vac_pos,glMatrix.vec3.fromValues(-0.5,0.0,2.0));
-
-
-        center = glMatrix.vec3.add(center, vac_pos, front);
-
-        center = glMatrix.vec3.add(center,center,glMatrix.vec3.fromValues(-0.5,0.0,2.0));
+        center = glMatrix.vec3.add(center, position, front);
         View = glMatrix.mat4.create();
         View = glMatrix.mat4.lookAt(View, position, center, up);
         return View;
@@ -129,45 +120,33 @@ var make_camera = function(canvas, position, up, yaw, pitch,vac,f=glMatrix.vec3.
         var velocity = movement_speed;// * dt;
         tmp = glMatrix.vec3.create()
         if (direction == CameraMovement.FORWARD) {
-            //essais pour rendre le deplacement plus fluide
-            // for (var i=0;i<100;i++){
-            //     tmp = glMatrix.vec3.scale(tmp, front, velocity/100.0);
-            //     position = glMatrix.vec3.add(position, position, tmp);
-            //     vac_shader.model = glMatrix.mat4.translate(vac_obj.model,vac_obj.model,tmp);
-            //     //position += front + velocity;
-            // }
             tmp = glMatrix.vec3.scale(tmp, front, velocity);
             position = glMatrix.vec3.add(position, position, tmp);
-            vac.translate(tmp);
+            vac.model = glMatrix.mat4.translate(vac.model,vac.model,tmp);
+            //console.log(vac);
             //vac_shader.model = glMatrix.mat4.translate(vac_obj.model,vac_obj.model,tmp);
-            
+
         }
         if (direction == CameraMovement.BACKWARD) {
             tmp = glMatrix.vec3.scale(tmp, front, velocity);
             position = glMatrix.vec3.sub(position, position, tmp);
-
-            tmp = glMatrix.vec3.negate(tmp,tmp);
-            vac.translate(tmp);
-            // vac_shader.model = glMatrix.mat4.translate(vac_obj.model,vac_obj.model,tmp);
+            glMatrix.vec3.negate(tmp,tmp);
+            vac.model = glMatrix.mat4.translate(vac.model,vac.model,tmp);
             //position -= front + velocity;
         }
         if (direction == CameraMovement.LEFT) {
             tmp = glMatrix.vec3.scale(tmp, right, velocity);
             position = glMatrix.vec3.sub(position, position, tmp);
-
-            tmp = glMatrix.vec3.negate(tmp,tmp);
-            vac.translate(tmp);
-            // vac_shader.model = glMatrix.mat4.translate(vac_obj.model,vac_obj.model,tmp);
+            glMatrix.vec3.negate(tmp,tmp);
+            vac.model = glMatrix.mat4.translate(vac.model,vac.model,tmp);
             //position -= right + velocity;
         }
         if (direction == CameraMovement.RIGHT) {
             tmp = glMatrix.vec3.scale(tmp, right, velocity);
             position = glMatrix.vec3.add(position, position, tmp);
-            vac.translate(tmp);
-            // vac_shader.model = glMatrix.mat4.translate(vac_obj.model,vac_obj.model,tmp);
+            vac.model = glMatrix.mat4.translate(vac.model,vac.model,tmp);
             //position += right + velocity;
         }
-        console.log("position", position);
     }
 
     function process_mouse_movement(xoffset, yoffset, constrain_pitch = true) {
@@ -186,8 +165,6 @@ var make_camera = function(canvas, position, up, yaw, pitch,vac,f=glMatrix.vec3.
                 pitch = -89.0
             }
         }
-
-        //console.log("yaw and pitch : ", yaw, pitch);
 
         // Update front, right, up with the new Euler angles
         update_camera_vectors();
@@ -213,7 +190,7 @@ var make_camera = function(canvas, position, up, yaw, pitch,vac,f=glMatrix.vec3.
         yawr = deg2rad(yaw)
         pitchr = deg2rad(pitch)
 
-        fx = Math.cos(yawr)* Math.cos(pitchr);
+        fx = Math.cos(yawr) * Math.cos(pitchr);
         fy = Math.sin(pitchr);
         fz = Math.sin(yawr) * Math.cos(pitchr);
 

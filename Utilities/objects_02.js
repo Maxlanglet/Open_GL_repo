@@ -86,25 +86,25 @@ var load_obj = async function(name = 'bunny_small.obj',is_multiple=0) {
         var text = await response.text();
         var ret = await load_mesh(text);}
     else {
-        var ret = []
+        var ret = [];
         for (var i = 1; i <= is_multiple; i++) {
-            var tmp = name.split(".obj")[0] + i.toString() + ".obj"
+            var tmp = name.split(".obj")[0] + i.toString() + ".obj";
             const response = await fetch(tmp);
             var text = await response.text();
             ret.push(await load_mesh(text))
         }
     }
     return ret;
-}
+};
 
 var make_objects = async function(gl, objs) {
-    var mesh = []
+    var mesh = [];
     for(var i = 0;i<objs.length;i++){
-        var obj = await objs[i]
+        var obj = await objs[i];
         mesh.push(await make_object(gl,obj))
     }
     return mesh
-}
+};
 
 var make_object = async function(gl, obj) {
     // We need the object to be ready to proceed:
