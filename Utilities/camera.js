@@ -1,4 +1,4 @@
-var make_camera = function(canvas, position, up, yaw, pitch,f=glMatrix.vec3.fromValues(0, 0, 1.0)) {
+var make_camera = function(canvas, position, up, yaw, pitch,vac,f=glMatrix.vec3.fromValues(0, 0, 1.0)) {
 
     const CameraMovement = {
         FORWARD: 1,
@@ -122,24 +122,29 @@ var make_camera = function(canvas, position, up, yaw, pitch,f=glMatrix.vec3.from
         if (direction == CameraMovement.FORWARD) {
             tmp = glMatrix.vec3.scale(tmp, front, velocity);
             position = glMatrix.vec3.add(position, position, tmp);
-            vac.translate(tmp);
-            console.log(vac);
+            vac.model = glMatrix.mat4.translate(vac.model,vac.model,tmp);
+            //console.log(vac);
             //vac_shader.model = glMatrix.mat4.translate(vac_obj.model,vac_obj.model,tmp);
 
         }
         if (direction == CameraMovement.BACKWARD) {
             tmp = glMatrix.vec3.scale(tmp, front, velocity);
             position = glMatrix.vec3.sub(position, position, tmp);
+            glMatrix.vec3.negate(tmp,tmp);
+            vac.model = glMatrix.mat4.translate(vac.model,vac.model,tmp);
             //position -= front + velocity;
         }
         if (direction == CameraMovement.LEFT) {
             tmp = glMatrix.vec3.scale(tmp, right, velocity);
             position = glMatrix.vec3.sub(position, position, tmp);
+            glMatrix.vec3.negate(tmp,tmp);
+            vac.model = glMatrix.mat4.translate(vac.model,vac.model,tmp);
             //position -= right + velocity;
         }
         if (direction == CameraMovement.RIGHT) {
             tmp = glMatrix.vec3.scale(tmp, right, velocity);
             position = glMatrix.vec3.add(position, position, tmp);
+            vac.model = glMatrix.mat4.translate(vac.model,vac.model,tmp);
             //position += right + velocity;
         }
     }
