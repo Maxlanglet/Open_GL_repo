@@ -22,6 +22,9 @@ var make_camera = function(canvas, position, up, yaw, pitch,vac,f=glMatrix.vec3.
     var mouse_sensitivity = 0.5;
     var zoom = 0.0; // Not used anymore
 
+    let yawr = 0
+    let pitchr = 0
+
     var dt = 0.0;
 
     var mouse_prev_x = 0.0;
@@ -103,18 +106,17 @@ var make_camera = function(canvas, position, up, yaw, pitch,vac,f=glMatrix.vec3.
     }
 
     function get_view_matrix() {
-        center = glMatrix.vec3.create();
-
+        let center = glMatrix.vec3.create();
         var vac_pos = vac.get_pos();
+        //center = glMatrix.vec3.add(center, position, glMatrix.vec3.fromValues(0.00,0.0,2.0));
 
-        //vac_pos = glMatrix.mat3.add(vac_pos,vac_pos,glMatrix.vec3.fromValues(-0.5,0.0,2.0));
-
-
-        center = glMatrix.vec3.add(center, vac_pos, front);
-
-        //center = glMatrix.vec3.add(center,center,glMatrix.vec3.fromValues(-0.5,0.0,2.0));
+        center = glMatrix.vec3.add(center, position, front);
+        //glMatrix.vec3.add(center, center,glMatrix.vec3.fromValues(0.00,0.0,2.0) );
+        let position_tmp = glMatrix.vec3.create();
+        glMatrix.vec3.rotateY(position_tmp,position,vac_pos,yawr);
+        //position_tmp = position
         View = glMatrix.mat4.create();
-        View = glMatrix.mat4.lookAt(View, position, center, up);
+        View = glMatrix.mat4.lookAt(View, position_tmp, vac_pos, up);
         return View;
     }
 
@@ -211,42 +213,22 @@ var make_camera = function(canvas, position, up, yaw, pitch,vac,f=glMatrix.vec3.
 
     function update_camera_vectors() {
 
-        center = glMatrix.vec3.create();
+        yawr = deg2rad(yaw)
+        pitchr = deg2rad(pitch)
 
-        var vac_pos = vac.get_pos();
+        fx = Math.cos(yawr)* Math.cos(pitchr);
+        fy = Math.sin(pitchr);
+        fz = Math.sin(yawr) * Math.cos(pitchr);
 
-        center = glMatrix.vec3.add(center, vac_pos, front);
-
-        View = glMatrix.mat4.create();
-        View = glMatrix.mat4.lookAt(View, position, center, up);
-
-        // // move camera a distance r away from the center
-        // glTranslatef(0, 0, -r);
-
-        // // rotate 
-        // glRotatef(angley, 0, 1, 0);
-        // glRotatef(anglex, 1, 0, 0);
-
-        // // move to center of circle    
-        // glTranslatef(-cx, -cy, -cz)
-
-
-        // yawr = deg2rad(yaw)
-        // pitchr = deg2rad(pitch)
-
-        // fx = Math.cos(yawr)* Math.cos(pitchr);
-        // fy = Math.sin(pitchr);
-        // fz = Math.sin(yawr) * Math.cos(pitchr);
-
-        // front = glMatrix.vec3.fromValues(fx, fy, fz);
+        front = glMatrix.vec3.fromValues(fx, fy, fz);
         // //front = glMatrix.vec3.normalize(front, front);
 
         // // recompute right, up
-        // right = glMatrix.vec3.cross(right, front, world_up);
-        // //right = glMatrix.vec3.normalize(right, right);
+        //right = glMatrix.vec3.cross(right, front, world_up);
+        //right = glMatrix.vec3.normalize(right, right);
 
-        // //up = glMatrix.vec3.cross(up, right, front);
-        // //up = glMatrix.vec3.normalize(up, up);
+        //up = glMatrix.vec3.cross(up, right, front);
+
     }
     
     function get_position() {

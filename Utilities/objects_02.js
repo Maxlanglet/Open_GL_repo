@@ -116,7 +116,7 @@ var make_object = async function(gl, obj) {
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
     var Model = glMatrix.mat4.create();
-    Model = glMatrix.mat4.translate(Model, Model, glMatrix.vec3.fromValues(0.5, -0.5, -1.0));
+    //Model = glMatrix.mat4.translate(Model, Model, glMatrix.vec3.fromValues(0.5, -0.5, -1.0));
 
     function activate(shader) {
         // these object have all 3 positions + 2 textures + 3 normals
