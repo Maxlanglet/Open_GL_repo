@@ -25,10 +25,14 @@ var make_vacuum=function(vac, vac_obj, vac_shader_comps, vac_shader, vac_pos, gl
     function get_shader(){
     	return vac_shader;
     }
-	
-    function translate(tmp){
-    	vac_shader.model = glMatrix.mat4.translate(vac_obj.model,vac_obj.model,tmp);
-    	vac_pos = glMatrix.vec3.add(vac_pos, vac_pos, tmp);
+
+    function rotate(rad){
+        glMatrix.mat4.rotateY(vac_obj.model,vac_obj.model,rad)
+    }
+
+    function translate(trans_pos,trans_model){
+    	glMatrix.mat4.translate(vac_obj.model,vac_obj.model,trans_model);
+    	vac_pos = glMatrix.vec3.add(vac_pos, vac_pos, trans_pos);
 
     	console.log('vac_pos', vac_pos);
 
@@ -40,5 +44,6 @@ var make_vacuum=function(vac, vac_obj, vac_shader_comps, vac_shader, vac_pos, gl
 		draw: draw,
 		get_shader: get_shader,
 		get_pos: get_pos,
+        rotate: rotate
 	}
-}
+};

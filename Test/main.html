@@ -38,7 +38,7 @@
         var seats_shader_comps = await load_shader_seats(gl);
 
         var vac = await load_obj('../Objects/vac.obj');
-        var vac_obj = await make_object(gl, vac)
+        var vac_obj = await make_object(gl, vac);
         var vac_shader_comps = await load_shader_wall(gl);
 
         //Different shaders here
@@ -51,7 +51,7 @@
         //Camera parameters
         var vac_pos =  glMatrix.vec3.fromValues(0,0,0);
         let position = glMatrix.vec3.create();
-        glMatrix.vec3.add(position,vac_pos,glMatrix.vec3.fromValues(-2.0,0.5,0));
+        glMatrix.vec3.add(position,vac_pos,glMatrix.vec3.fromValues(0,0.5,-2.0));
 
 
         var vacuum = await make_vacuum(vac, vac_obj, vac_shader_comps, vac_shader, vac_pos, gl);
@@ -98,7 +98,6 @@
                 seats_shader_comps.shader_activate(seats_shader, seats_obj[i], unif['model']);
                 seats_obj[i].draw();
             }
-
 
             // console.log("placeholder" ,placeholder)
             // console.log("position", position)
