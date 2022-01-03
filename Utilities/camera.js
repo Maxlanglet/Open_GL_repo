@@ -5,21 +5,14 @@ var make_camera = function(canvas, position, up, yaw, pitch,vac) {
         BACKWARD: 2,
         LEFT: 3,
         RIGHT: 4
-    }
-    var canvas = canvas;
-    var position = position;
+    };
 
-    var vac = vac;
     let origin = glMatrix.vec3.fromValues(0,0,0);
     var front_origin = glMatrix.vec3.fromValues(0,0,1);
     let front = glMatrix.vec3.copy(glMatrix.vec3.create(),front_origin);
-    var up = up;
     var right_origin = glMatrix.vec3.fromValues(-1,0,0);
     let right = glMatrix.vec3.copy(glMatrix.vec3.create(),right_origin);
 
-    // Euler angles
-    var yaw = 0.0;
-    var pitch = 0.0;
     var movement_speed = 0.5;
     var mouse_sensitivity = 0.5;
     var zoom = 0.0; // Not used anymore
