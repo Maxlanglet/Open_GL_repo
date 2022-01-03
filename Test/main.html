@@ -49,14 +49,12 @@
         var vac_shader = make_shader(gl, (vac_shader_comps).shader_v,(vac_shader_comps).shader_f);
 
         //Camera parameters
-        var vac_pos =  glMatrix.vec3.fromValues(0.5,-0.5,1);
+        var vac_pos =  glMatrix.vec3.fromValues(0,0,0);
         let position = glMatrix.vec3.create();
-        glMatrix.vec3.add(position,vac_pos,glMatrix.vec3.fromValues(0.0,0,0));
-        placeholder = glMatrix.vec3.fromValues(1, 0, -6.0)
+        glMatrix.vec3.add(position,vac_pos,glMatrix.vec3.fromValues(-2.0,0.5,0));
 
 
         var vacuum = await make_vacuum(vac, vac_obj, vac_shader_comps, vac_shader, vac_pos, gl);
-        //var vacuum = await make_vacuum(vac, vac_obj, vac_shader_comps, vac_shader, placeholder, gl);
 
         up = glMatrix.vec3.fromValues(0.0, 1.0, 0.0)
         yaw = -90.0
@@ -101,7 +99,6 @@
                 seats_obj[i].draw();
             }
 
-            placeholder = glMatrix.mat4.copy(placeholder, position);
 
             // console.log("placeholder" ,placeholder)
             // console.log("position", position)
