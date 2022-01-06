@@ -30,152 +30,103 @@
 <script language="javascript" type="text/javascript" src="../Utilities/objects_02.js"></script>
 <script language="javascript" type="text/javascript" src="../Shaders/shader_Lamb_obj.js"></script>
 <script language="javascript" type="text/javascript" src="../Shaders/shader_cubemap.js"></script>
-<script language="javascript" type="text/javascript" src="../Utilities/vacuum.js"></script>
 <script language="javascript" type="text/javascript" src="../Utilities/ammo.js"></script>
+<script language="javascript" type="text/javascript" src="../Utilities/FullObjectLoader.js"></script>
 
 <script>
-  async function main() {
-    // Boilerplate code
-    const canvas = document.getElementById('webgl_canvas');
-    c_width = canvas.width;
-    c_height = canvas.height;
-    const gl = canvas.getContext('webgl');
+    async function main() {
+        // Boilerplate code
+        const canvas = document.getElementById('webgl_canvas');
+        c_width = canvas.width;
+        c_height = canvas.height;
+        const gl = canvas.getContext('webgl');
 
-    let physicsWorld;
-    let lamb_objs=[];
-    let rigidBodies = [];
-    let rigidBodiesBullet = [];
-    let lamb_objs_comps=[];
-    let camera;
-    let shader_lamb;
-    let projection;
-    let tmpTrans; //Tmp ammo.js tansform obj
-      let deltaTime = 0;
+        let physicsWorld;
+        let lamb_objs=[];
+        let rigidBodies = [];
+        let rigidBodiesBullet = [];
+        let lamb_objs_comps=[];
+        let camera;
+        let shader_lamb;
+        let projection;
+        let tmpTrans; //Tmp ammo.js tansform obj
+        let deltaTime = 0;
+        let timeAction = 0;
 
-    function setupPhysicsWorld(){
-      //bt prefix for Bullet
-      let collisionConfiguration  = new Ammo.btDefaultCollisionConfiguration(),
-              dispatcher              = new Ammo.btCollisionDispatcher(collisionConfiguration),
-              overlappingPairCache    = new Ammo.btDbvtBroadphase(), //Alg uses BB to compute collision
-              solver                  = new Ammo.btSequentialImpulseConstraintSolver(); //Objets to interact properly (gravity,game logic, etc)
+        function setupPhysicsWorld(){
+            //bt prefix for Bullet
+            let collisionConfiguration  = new Ammo.btDefaultCollisionConfiguration(),
+            dispatcher              = new Ammo.btCollisionDispatcher(collisionConfiguration),
+            overlappingPairCache    = new Ammo.btDbvtBroadphase(), //Alg uses BB to compute collision
+            solver                  = new Ammo.btSequentialImpulseConstraintSolver(); //Objets to interact properly (gravity,game logic, etc)
 
-      physicsWorld           = new Ammo.btDiscreteDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
-      physicsWorld.setGravity(new Ammo.btVector3(0, -0.5, 0));
-    }
-    async function setupGraphics() {
-        // Enable tests for better rendering
-        gl.enable(gl.DEPTH_TEST);
-        //gl.enable(gl.CULL_FACE); // cull hidden faces behind normals!
-
-        //Load the object
-        var floor = await load_obj("../Objects/Room-SW/mesh/sol.obj");
-        var floor_obj = await make_object(gl, floor);
-        var floor_shader_comps = await load_shader_lamb(gl, "../Objects/Room-SW/textures/Concreto_color.png");
-        lamb_objs.push(floor_obj);
-        lamb_objs_comps.push(floor_shader_comps);
-
-        var vac = await load_obj("../Objects/robot-vacuum-cleaner-rob-vac/vac.obj");
-        var vac_obj = await make_object(gl, vac);
-        var vac_shader_comps = await load_shader_lamb(gl, "../Objects/robot-vacuum-cleaner-rob-vac/textures/internal_ground_ao_texture.jpeg", coef_refl = 1.2);
-        lamb_objs.push(vac_obj);
-        lamb_objs_comps.push(vac_shader_comps);
-
-        //let cube_shader_comps = await load_shader_cubemap(gl,"../Objects/yokohama3");
-        //Different shaders here
-        shader_lamb = make_shader(gl, shader_V_lamb, shader_F_lamb);
-
-        //place vacuum
-        var vac_pos =[0, 10.05, 0];
-        var vacuum = await make_vacuum(vac_obj, vac_pos);
-        vacuum.translate_pos(vac_pos);
-        vacuum.translate_model(vac_pos);
-        rigidBodies.push(vacuum);
-
-        //Camera parameters
-        let position = glMatrix.vec3.create();
-        glMatrix.vec3.add(position, vacuum.get_pos(), glMatrix.vec3.fromValues(0, 0.5, -2.0));
-
-        up = glMatrix.vec3.fromValues(0.0, 1.0, 0.0);
-        yaw = 0.0;
-        pitch = 0.0;
-        camera = make_camera(canvas, position, up, yaw, pitch, vacuum);
-        projection = camera.get_projection(45.0, c_width / c_height, 0.01, 100.0);
-    }
-    function renderFrame() {
-      //Draw loop
-      //gl.clearColor(0.5*deltaTime%1.0, 0.2*deltaTime%1.0, 0.7*deltaTime%1.0, 1);
-      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-      var view = camera.get_view_matrix();
-      deltaTime += 0.005;
-        camera.update(deltaTime);
-      updatePhysics(deltaTime);
-
-      //Shaders
-      shader_lamb.use();
-      var unif = shader_lamb.get_uniforms();
-      gl.uniformMatrix4fv(unif['view'], false, view);
-      gl.uniformMatrix4fv(unif['proj'], false, projection);
-
-      for (var i = 0; i < lamb_objs.length; i++) {
-        if (lamb_objs[i] instanceof Array) {
-          for (var j = 0; j < lamb_objs[i].length; j++) {
-            (lamb_objs[i][j]).activate(shader_lamb);
-            lamb_objs_comps[i].shader_activate(shader_lamb, lamb_objs[i][j], unif['model'], camera.get_position());
-            lamb_objs[i][j].draw();
-          }
-        } else {
-          lamb_objs[i].activate(shader_lamb);
-          lamb_objs_comps[i].shader_activate(shader_lamb, lamb_objs[i], unif['model'], camera.get_position());
-          lamb_objs[i].draw();
+            physicsWorld           = new Ammo.btDiscreteDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
+            physicsWorld.setGravity(new Ammo.btVector3(0, -0.5, 0));
         }
-      }
-        window.requestAnimationFrame(renderFrame);
-    }
 
-    function createAmmoBodyVac(){
-        let transform = new Ammo.btTransform();
-        transform.setIdentity();
-        transform.setOrigin( new Ammo.btVector3( 0, 20.1, 0 ) );
-        transform.setRotation( new Ammo.btQuaternion( 0, 0, 0, 1 ) );
-        let motionState = new Ammo.btDefaultMotionState( transform );
+        async function setupGraphics() {
+            // Enable tests for better rendering
+            gl.enable(gl.DEPTH_TEST);
+            //gl.enable(gl.CULL_FACE); // cull hidden faces behind normals!
 
-        //Shape of the vac object
-        let colShape = new Ammo.btBoxShape( new Ammo.btVector3( 0.15, 1.0, 0.1 ) );
-        colShape.setMargin( 0.05 );
+            //Load the object
+            var floor =  new ObjectLoader();
+            await floor.constructorAsync(gl,"../Objects/Room-SW/mesh/sol.obj","../Objects/Room-SW/textures/Concreto_color.png");
+            floor.createRigidBody(physicsWorld,0,[0,-0.05 ,0],new Ammo.btBoxShape( new Ammo.btVector3( 30, 0, 30 ) ));
+            lamb_objs.push(floor);
 
-        let mass = 3;
-        let localInertia = new Ammo.btVector3( 0, 0, 0 );
-        colShape.calculateLocalInertia( mass, localInertia );
+            for(var i = 1;i<21;i++){
+                var seat =  new ObjectLoader();
+                await seat.constructorAsync(gl,"../Objects/Room-SW/mesh/seat/seat_"+i.toString()+".obj","../Objects/Room-SW/textures/MaterialSofa_Base_color.png");
+                let posSeat = seat.getPos();
+                posSeat[1] -= 0;
+                seat.createRigidBody(physicsWorld,100,posSeat,new Ammo.btBoxShape( new Ammo.btVector3( 1.5, 1.5, 4 ) ));
+                lamb_objs.push(seat);
+                rigidBodies.push(seat);
+                rigidBodiesBullet.push(seat.getRigidBody());
+            }
 
-        let rbInfo = new Ammo.btRigidBodyConstructionInfo( mass, motionState, colShape, localInertia );
-        let body = new Ammo.btRigidBody( rbInfo );
+            var vac = new ObjectLoader();
+            await vac.constructorAsync(gl,"../Objects/robot-vacuum-cleaner-rob-vac/vac.obj","../Objects/robot-vacuum-cleaner-rob-vac/textures/internal_ground_ao_texture.jpeg",coef_refl = 1.2);
+            vac.translatePos(glMatrix.vec3.fromValues(0,10,0));
+            vac.createRigidBody(physicsWorld,30,vac.getPos(),new Ammo.btBoxShape( new Ammo.btVector3(  0.15, 1.0, 0.1 )));
+            lamb_objs.push(vac);
+            rigidBodies.push(vac);
+            rigidBodiesBullet.push(vac.getRigidBody());
 
+            //Different shaders here
+            shader_lamb = make_shader(gl, shader_V_lamb, shader_F_lamb);
 
-        physicsWorld.addRigidBody( body );
-        rigidBodiesBullet.push(body);
-    }
+            //Camera parameters
+            let positionInit = glMatrix.vec3.fromValues(0, 0.5, -2.0);
+            let up = glMatrix.vec3.fromValues(0.0, 1.0, 0.0);
+            yaw = 0.0;
+            pitch = 0.0;
+            camera = make_camera(canvas, positionInit, up, yaw, pitch, vac);
+            projection = camera.get_projection(45.0, c_width / c_height, 0.01, 100.0);
+        }
 
-      function createAmmoBodyFloor(){
-          let transform = new Ammo.btTransform();
-          transform.setIdentity();
-          transform.setOrigin( new Ammo.btVector3( 0, -1.9, 0 ) );
-          transform.setRotation( new Ammo.btQuaternion( 0, 0, 0, 1 ) );
-          let motionState = new Ammo.btDefaultMotionState( transform );
+        function renderFrame() {
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+            //Draw loop
+            deltaTime += 0.005;
+            camera.update(deltaTime);
+            //Update physics
+            updatePhysics(deltaTime);
+            //Update camera
+            var view = camera.get_view_matrix();
 
-          //Shape of the vac object
-          let colShape = new Ammo.btBoxShape( new Ammo.btVector3( 30, 1, 30 ) );
-          colShape.setMargin( 0.05 );
+            //Shaders
+            shader_lamb.use();
+            var unif = shader_lamb.get_uniforms();
+            gl.uniformMatrix4fv(unif['view'], false, view);
+            gl.uniformMatrix4fv(unif['proj'], false, projection);
 
-          let localInertia = new Ammo.btVector3( 0, 0, 0 );
-          colShape.calculateLocalInertia( 0, localInertia );
-
-          let rbInfo = new Ammo.btRigidBodyConstructionInfo( 0, motionState, colShape, localInertia );
-          let body = new Ammo.btRigidBody( rbInfo );
-
-
-          physicsWorld.addRigidBody( body );
-      }
+            for (var i = 0; i < lamb_objs.length; i++) {
+                lamb_objs[i].activateObject(shader_lamb,camera,unif['model']);
+            }
+            window.requestAnimationFrame(renderFrame);
+        }
 
       function updatePhysics(deltaTime){
         physicsWorld.stepSimulation(deltaTime,10);
@@ -186,21 +137,23 @@
             let ms = objAmmo.getMotionState();
             if ( ms ) {
                 ms.getWorldTransform( tmpTrans );
+                console.log();
                 let p = tmpTrans.getOrigin();
                 let q = tmpTrans.getRotation();
-                objOpenGL.setRotation([q.x(),q.y(),q.z(),q.w()]);
-                objOpenGL.setPosition([p.x(),p.y(),p.z()]);
+                //objOpenGL.setRotation(glMatrix.quat.fromValues(q.x(),q.y(),q.z(),q.w()));
+                var newPos = glMatrix.vec3.fromValues(p.x(),p.y(),p.z());
+                objOpenGL.setPosition(newPos);
+                camera.updatePosition();
             }
         }
       }
+
     //Bullet
     Ammo().then(await initBullet );
     async function initBullet(){
         tmpTrans = new Ammo.btTransform();
         setupPhysicsWorld();
         await setupGraphics();
-        createAmmoBodyFloor();
-        createAmmoBodyVac();
         renderFrame();
     }
   }

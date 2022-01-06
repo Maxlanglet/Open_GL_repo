@@ -5,7 +5,9 @@ var load_obj = async function(name = 'bunny_small.obj',is_multiple=0) {
       var normals = [];
       var textures = [];
       var vertices = [];
-     
+     var min=[1000,1000,1000];
+     var max = [-1000,-1000,-1000];
+
       for ( var i = 0 ; i < lines.length ; i++ ) {
         var parts = lines[i].trimRight().split(' ');
         if ( parts.length > 0 ) {
@@ -77,7 +79,7 @@ var load_obj = async function(name = 'bunny_small.obj',is_multiple=0) {
       // console.log("Loaded mesh with " + vertexCount + " vertices");
       return {
         buffer: new Float32Array(vertices),
-        num_triangles: vertexCount
+        num_triangles: vertexCount,
       };
     }
 
@@ -147,4 +149,4 @@ var make_object = async function(gl, obj) {
         draw: draw,
     }
 
-}
+};
