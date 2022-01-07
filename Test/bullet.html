@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <body style="background-image: url('../extra_rsc/background.jpg');">
-<audio src="../extra_rsc/star-wars-cantina.mp3" autoplay> </audio>
+<!-- <audio src="../extra_rsc/star-wars-cantina.mp3" autoplay> </audio> -->
 <div id="logo" style="background-image: url('../extra_rsc/starvacuum.png');
     padding-left: 0;
     padding-right: 0;
@@ -32,6 +32,7 @@
 <script language="javascript" type="text/javascript" src="../Shaders/shader_cubemap.js"></script>
 <script language="javascript" type="text/javascript" src="../Utilities/vacuum.js"></script>
 <script language="javascript" type="text/javascript" src="../Utilities/ammo.js"></script>
+<script language="javascript" type="text/javascript" src="../Utilities/Particles.js"></script>
 
 <script>
   async function main() {
@@ -51,6 +52,7 @@
     let projection;
     let tmpTrans; //Tmp ammo.js tansform obj
       let deltaTime = 0;
+    let particles;
 
     function setupPhysicsWorld(){
       //bt prefix for Bullet
@@ -84,6 +86,10 @@
         //Different shaders here
         shader_lamb = make_shader(gl, shader_V_lamb, shader_F_lamb);
 
+        //Particles
+        particles = new Particles(10, gl);
+        particles.initialize();
+
         //place vacuum
         var vac_pos =[0, 10.05, 0];
         var vacuum = await make_vacuum(vac_obj, vac_pos);
@@ -100,6 +106,8 @@
         pitch = 0.0;
         camera = make_camera(canvas, position, up, yaw, pitch, vacuum);
         projection = camera.get_projection(45.0, c_width / c_height, 0.01, 100.0);
+
+
     }
     function renderFrame() {
       //Draw loop
@@ -130,6 +138,8 @@
           lamb_objs[i].draw();
         }
       }
+
+        particles.spawn_particles(shader_lamb, view, projection, camera);
         window.requestAnimationFrame(renderFrame);
     }
 
