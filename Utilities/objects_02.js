@@ -5,7 +5,9 @@ var load_obj = async function(name = 'bunny_small.obj',is_multiple=0) {
       var normals = [];
       var textures = [];
       var vertices = [];
-     
+     var min=[1000,1000,1000];
+     var max = [-1000,-1000,-1000];
+
       for ( var i = 0 ; i < lines.length ; i++ ) {
         var parts = lines[i].trimRight().split(' ');
         if ( parts.length > 0 ) {
@@ -16,6 +18,12 @@ var load_obj = async function(name = 'bunny_small.obj',is_multiple=0) {
                 parseFloat(parts[2]),
                 parseFloat(parts[3])
               ));
+            for(var j = 0;j<3;j++){
+                if(min[j] > parseFloat(parts[j+1]))
+                    min[j] = parseFloat(parts[j+1]);
+                if(max[j] < parseFloat(parts[j+1]))
+                    max[j] = parseFloat(parts[j+1]);
+            }
               break;
             case 'vn':
               normals.push(
@@ -77,7 +85,9 @@ var load_obj = async function(name = 'bunny_small.obj',is_multiple=0) {
       // console.log("Loaded mesh with " + vertexCount + " vertices");
       return {
         buffer: new Float32Array(vertices),
-        num_triangles: vertexCount
+        num_triangles: vertexCount,
+          min:min,
+          max:max
       };
     }
 
@@ -117,6 +127,11 @@ var make_object = async function(gl, obj) {
 
     var Model = glMatrix.mat4.create();
     //Model = glMatrix.mat4.translate(Model, Model, glMatrix.vec3.fromValues(0.5, -0.5, -1.0));
+    let center = [0,0,0];
+    for(var j = 0;j<3;j++)
+        center[j] = (obj.min[j] + obj.max[j])/2;
+
+    
 
     function activate(shader) {
         // these object have all 3 positions + 2 textures + 3 normals
@@ -145,6 +160,9 @@ var make_object = async function(gl, obj) {
         model: Model,
         activate: activate,
         draw: draw,
+        center:center,
+        min:obj.min,
+        max:obj.max
     }
 
-}
+};
