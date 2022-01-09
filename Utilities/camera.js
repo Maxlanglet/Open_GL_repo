@@ -68,7 +68,6 @@ var make_camera = function(canvas, positionInit, upInit, yaw, pitch,vac) {
         let objAmmo = vac.getRigidBody();
         let velocityPrev = objAmmo.getLinearVelocity();
         let velocityVector = [velocityPrev.x(),velocityPrev.y(),velocityPrev.z()];
-        let velocityReset = false;
         for(var key in dicTimeDir){
             var delta = dt-dicTimeDir[key];
             if(delta <= timeActionConst && dicTimeDir[key] !== 0){
@@ -89,19 +88,6 @@ var make_camera = function(canvas, positionInit, upInit, yaw, pitch,vac) {
     }
 
     function updatePosition(){
-        var rotFromQuat = glMatrix.quat.getAxisAngle(position,vac.getRotation());
-        /*if(position[0] === 1){
-            glMatrix.vec3.rotateX(position,positionInit,origin,rotFromQuat);
-            //glMatrix.vec3.rotateX(up,upInit,origin,rotFromQuat);
-        }
-         if(position[1] === 1){
-            glMatrix.vec3.rotateY(position,positionInit,origin,rotFromQuat);
-            //glMatrix.vec3.rotateY(up,upInit,origin,rotFromQuat);
-     }
-         if(position[2] === 1){
-            glMatrix.vec3.rotateZ(position,positionInit,origin,rotFromQuat);
-            //glMatrix.vec3.rotateZ(up,upInit,origin,rotFromQuat);
-        }*/
         glMatrix.vec3.add(position,vac.getPos(),positionInit);
     }
 
@@ -208,44 +194,7 @@ var make_camera = function(canvas, positionInit, upInit, yaw, pitch,vac) {
     }
 
     function process_keyboard(direction) {
-        var velocity = movement_speed;// * dt;
-        let tmp = glMatrix.vec3.create();
-
         dicTimeDir[direction] = dt;
-        /*
-        if (direction === CameraMovement.FORWARD) {
-            /*tmp = glMatrix.vec3.scale(tmp, front_origin, velocity);
-            vac.translatePos(tmp);
-            updatePosition();
-        }
-        if (direction === CameraMovement.BACKWARD) {
-            tmp = glMatrix.vec3.scale(tmp, front_origin, velocity);
-            tmp = glMatrix.vec3.negate(tmp,tmp);
-            vac.translatePos(tmp);
-            updatePosition();
-        }
-        if (direction === CameraMovement.LEFT) {
-            tmp = glMatrix.vec3.scale(tmp, right_origin, velocity);
-            tmp = glMatrix.vec3.negate(tmp,tmp);
-            vac.translatePos(tmp);
-            updatePosition();
-        }
-        if (direction === CameraMovement.RIGHT) {
-            tmp = glMatrix.vec3.scale(tmp, right_origin, velocity);
-            vac.translatePos(tmp);
-            updatePosition();
-        }
-        if (direction === CameraMovement.UP) {
-            tmp = glMatrix.vec3.scale(tmp, up, velocity);
-            vac.translatePos(tmp);
-            updatePosition();
-        }
-        if (direction === CameraMovement.DOWN) {
-            tmp = glMatrix.vec3.scale(tmp, up, velocity);
-            tmp = glMatrix.vec3.negate(tmp,tmp);
-            vac.translatePos(tmp);
-            updatePosition();
-        }*/
     }
 
     function process_mouse_movement(xoffset, yoffset, constrain_pitch = true) {
@@ -289,22 +238,12 @@ var make_camera = function(canvas, positionInit, upInit, yaw, pitch,vac) {
 
     function update_camera_vectors() {
 
-        yawr = deg2rad(yaw)
-        pitchr = deg2rad(pitch)
+        yawr = deg2rad(yaw);
+        pitchr = deg2rad(pitch);
 
         fx = Math.cos(yawr)* Math.cos(pitchr);
         fy = Math.sin(pitchr);
         fz = Math.sin(yawr) * Math.cos(pitchr);
-
-        //front = glMatrix.vec3.fromValues(fx, fy, fz);
-        // //front = glMatrix.vec3.normalize(front, front);
-
-        // // recompute right, up
-        //right = glMatrix.vec3.cross(right, front, world_up);
-        //right = glMatrix.vec3.normalize(right, right);
-
-        //up = glMatrix.vec3.cross(up, right, front);
-
     }
 
     function get_position() {

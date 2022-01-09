@@ -2,13 +2,20 @@ class ObjectLoader {
     constructor() {
     }
 
-    async constructorAsync(gl,meshName,textureName,isCubemap=false,coef_refl= 0) {
+    async constructorAsync(gl,meshName,textureName,shapeName,isCubemap=false,coef_refl= 0,needCenter=true,coef_emit=0.0) {
         this.mesh = await load_obj(meshName);
         this.obj = await make_object(gl, this.mesh);
-        if (isCubemap === true)
-            this.shaderComps = await load_shader_cubemap(gl, textureName);
+        if(needCenter)
+            this.center = glMatrix.vec3.fromValues(this.obj.center[0],this.obj.center[1],this.obj.center[2]);
         else
-            this.shaderComps = await load_shader_lamb(gl, textureName);
+            this.center = glMatrix.vec3.create();
+
+        if (isCubemap === true)
+            this.shaderComps = await load_shader_cubemap(gl, textureName,coef_refl=coef_refl,coef_emit=coef_emit);
+        else
+            this.shaderComps = await load_shader_lamb(gl, textureName,1.0,coef_refl,coef_emit);
+
+        this.shapeName = shapeName;
         this.tmpOpVec3 = glMatrix.vec3.create();
         this.tmpOpQuat = glMatrix.quat.create();
         this.rot = glMatrix.quat.create();
@@ -23,6 +30,10 @@ class ObjectLoader {
         this.obj.draw();
 
     }
+
+    async getShape(scaleFactor){return await this.obj.buildShape(scaleFactor,this.shapeName);}
+
+    getCenter(){return this.center;}
 
     createRigidBody(physicsWorld,mass,origin,shape){
         let transform = new Ammo.btTransform();
@@ -46,19 +57,6 @@ class ObjectLoader {
         physicsWorld.addRigidBody( this.body );
     }
 
-    createKinematicObj(physicsWorld,shape){
-        //Shape of the vac object
-        //let colShape = new Ammo.btBoxShape( new Ammo.btVector3( 0.15, 1.0, 0.1 ) );
-        let colShape = shape;
-        colShape.setMargin( 0.05 );
-
-        var ghostShape = new Ammo.btGhostObject();
-        var height = 1.0;
-        var up = new Ammo.btVector3(0,1,0);
-        this.body = new Ammo.btKinematicCharacterController(ghostShape,colShape,height,up);
-
-        physicsWorld.addAction( this.body );
-    }
 
     getRigidBody(){return this.body;}
 
@@ -90,9 +88,14 @@ class ObjectLoader {
     }
 
     rotateModel(quatRot){
-        glMatrix.mat4.fromQuat(this.tmpOpMat4,quatRot);
-        glMatrix.mat4.multiply(this.obj.model,glMatrix.mat4.fromTranslation(glMatrix.mat4.create(),this.getPos()),this.tmpOpMat4);
+
     }
+
+    getMinPos(){
+        return this.obj.min;
+    }
+
+    getMaxPos(){return this.obj.max;}
 
     setModel(newModel){
         this.prevPos = this.getPos();
@@ -100,17 +103,16 @@ class ObjectLoader {
     }
 
     setRotation(newRot){
-            this.rotateModel(newRot);
+        if(!glMatrix.quat.equals(newRot,this.getRotation())) {
+            glMatrix.mat4.fromRotationTranslation(this.obj.model, newRot, this.getPos());
+        }
     }
 
     setPosition(newPos){
         glMatrix.mat4.getTranslation(this.prevPos,this.obj.model);
+        glMatrix.vec3.sub(newPos,newPos,this.center);
         if(!glMatrix.vec3.equals(newPos,this.getPos())) {
             glMatrix.mat4.fromRotationTranslation(this.obj.model,this.getRotation(),newPos);
-            /*var tmp = glMatrix.mat4.create();
-            var Rot = glMatrix.mat4.fromQuat(glMatrix.mat4.create(),this.getRotation());
-            glMatrix.mat4.fromTranslation(this.obj.model,newPos);*/
-            //glMatrix.mat4.multiply(this.obj.model,Rot,tmp)
         }
     }
 }

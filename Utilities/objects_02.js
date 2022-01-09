@@ -18,6 +18,12 @@ var load_obj = async function(name = 'bunny_small.obj',is_multiple=0) {
                 parseFloat(parts[2]),
                 parseFloat(parts[3])
               ));
+            for(var j = 0;j<3;j++){
+                if(min[j] > parseFloat(parts[j+1]))
+                    min[j] = parseFloat(parts[j+1]);
+                if(max[j] < parseFloat(parts[j+1]))
+                    max[j] = parseFloat(parts[j+1]);
+            }
               break;
             case 'vn':
               normals.push(
@@ -80,6 +86,8 @@ var load_obj = async function(name = 'bunny_small.obj',is_multiple=0) {
       return {
         buffer: new Float32Array(vertices),
         num_triangles: vertexCount,
+          min:min,
+          max:max
       };
     }
 
@@ -119,6 +127,31 @@ var make_object = async function(gl, obj) {
 
     var Model = glMatrix.mat4.create();
     //Model = glMatrix.mat4.translate(Model, Model, glMatrix.vec3.fromValues(0.5, -0.5, -1.0));
+    let center = [0,0,0];
+    for(var j = 0;j<3;j++)
+        center[j] = (obj.min[j] + obj.max[j])/2;
+
+    async function buildTriangleMeshShape(scaleFactor,shapeName){
+        var objShape;
+        if(shapeName !== "") {
+            objShape = await load_obj(shapeName);
+        }
+        else
+            objShape = obj;
+
+        let triangleMesh = new Ammo.btTriangleMesh(true,true);
+
+        for(var i = 0;i<objShape.buffer.length;i+=3*8){
+            var v1 = new Ammo.btVector3((objShape.buffer[i]-(objShape.min[0]+objShape.max[0])/2),(objShape.buffer[i+1]-(objShape.min[1]+objShape.max[1])/2),(objShape.buffer[i+2]-(objShape.min[2]+objShape.max[2])/2));
+            var v2 = new Ammo.btVector3((objShape.buffer[i+8]-(objShape.min[0]+objShape.max[0])/2),(objShape.buffer[i+1+8]-(objShape.min[1]+objShape.max[1])/2),(objShape.buffer[i+2+8]-(objShape.min[2]+objShape.max[2])/2));
+            var v3 = new Ammo.btVector3((objShape.buffer[i+16]-(objShape.min[0]+objShape.max[0])/2),(objShape.buffer[i+1+16]-(objShape.min[1]+objShape.max[1])/2),(objShape.buffer[i+2+16]-(objShape.min[2]+objShape.max[2])/2));
+
+            triangleMesh.addTriangle(v1,v2,v3,true);
+        }
+
+        //return new Ammo.btConvexTriangleMeshShape(triangleMesh,true,true);
+        return new Ammo.btBvhTriangleMeshShape(triangleMesh,true,true);
+    }
 
     function activate(shader) {
         // these object have all 3 positions + 2 textures + 3 normals
@@ -147,6 +180,10 @@ var make_object = async function(gl, obj) {
         model: Model,
         activate: activate,
         draw: draw,
+        center:center,
+        min:obj.min,
+        max:obj.max,
+        buildShape:buildTriangleMeshShape
     }
 
 };
