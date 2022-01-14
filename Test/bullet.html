@@ -50,6 +50,7 @@
         let camera;
         let shader_lamb;
         let projection;
+        let view;
         let tmpTrans; //Tmp ammo.js tansform obj
         let deltaTime = 0;
         let timeAction = 0;
@@ -149,6 +150,7 @@
             pitch = 0.0;
             camera = make_camera(canvas, positionInit, up, yaw, pitch, vac);
             projection = camera.get_projection(45.0, c_width / c_height, 0.01, 100.0);
+
         }
 
         function renderFrame() {
@@ -159,7 +161,7 @@
             //Update physics
             updatePhysics(deltaTime);
             //Update camera
-            var view = camera.get_view_matrix();
+            view = camera.get_view_matrix();
 
             //Shaders
             shader_lamb.use();
@@ -170,13 +172,14 @@
             for (var i = 0; i < lamb_objs.length; i++) {
                 lamb_objs[i].activateObject(shader_lamb,camera,unif['model']);
             }
-
-            particles.spawn_particles(shader_lamb, view, projection, camera);
+            particles.spawn_particles(shader_lamb, unif, camera);
             window.requestAnimationFrame(renderFrame);
         }
 
       function updatePhysics(deltaTime){
         physicsWorld.stepSimulation(deltaTime,10);
+
+        particles.update(rigidBodies, rigidBodiesBullet, shader_lamb, camera);
 
         for(let i = 0;i<rigidBodiesBullet.length;i++){
             let objOpenGL = rigidBodies[ i ];
@@ -193,7 +196,6 @@
                 camera.updatePosition();
             }
         }
-        particles.update();
       }
 
     //Bullet

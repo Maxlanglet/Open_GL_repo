@@ -10,6 +10,7 @@ class Particles{
 		this.physicsWorld=physicsWorld;
 		this.vacc_radius = 3;
 		this.vac = vac;
+		this.shape = new Ammo.btSphereShape(0.15);
 	}
 
 
@@ -21,14 +22,6 @@ class Particles{
 
 
 			await this.object_loader.constructorAsync(this.gl,"../Objects/part.obj", "../Objects/Room-SW/textures/Yellow.png");
-
-			// var sphere = await load_obj("../Objects/part.obj");
-			// var sphere_obj = await make_object(this.gl, sphere);
-
-
-			// var sphere_shader_comps = await load_shader_lamb(this.gl,"../Objects/Room-SW/textures/Yellow.png"); //See for colors
-
-			//this.object_loader.createRigidBody(this.physicsWorld,0.1,this.particles[i].getPos(),shape);
             this.particles.push(this.object_loader);
             //this.particles_comp.push(sphere_shader_comps);
 
@@ -40,15 +33,9 @@ class Particles{
 
             var newPos = glMatrix.vec3.fromValues(pos1,0,pos2);
             //var shape = new Ammo.btBoxShape(new Ammo.btVector3());
-            var shape = new Ammo.btSphereShape(0.15);
 
             this.particles[i].setPosition(newPos);
-
-            this.particles[i].createRigidBody(this.physicsWorld,0.01,this.particles[i].getPos(),shape);
-            //this.rigidBodies.push(this.particles[i].createRigidBody(this.physicsWorld,0.1,newPos,shape));
-
-            //glMatrix.mat4.translate(this.particles[i].model,this.particles[i].model,glMatrix.vec3.fromValues(pos1,0.15,pos2));
-            //glMatrix.mat4.multiplyScalar(this.particles[i].model, this.particles[i].model, 0.1);
+            this.particles[i].createRigidBody(this.physicsWorld,0.01,this.particles[i].getPos(),this.shape);
 
         }
 
@@ -59,8 +46,27 @@ class Particles{
 	}
 
 
-	update(){
+	async update(rigidBodies, rigidBodiesBullet, shader_lamb, camera){
+
+
+		//Setting velocity to 0 in case of going too far
+
+
+		var pos = this.particles[0].getPos();
+		for (var i = this.particles.length - 1; i >= 0; i--) {
+			pos = this.particles[i].getPos();
+			for (var n = 2; n >= 0; n--) {
+				if (Math.abs(pos[n])>20){
+					this.particles[i].getRigidBody().setLinearVelocity(new Ammo.btVector3(0,0,0));
+				}
+			}
+		}
+		
+
+
 		//to respawn particles
+
+		var dists = [];
 		for (var i = this.particles.length - 1; i >= 0; i--) {
 
 			//Euclidean distance from the vac to the particle
@@ -70,27 +76,80 @@ class Particles{
 
 			if (dist<=this.vacc_radius){
 				var rigid = this.particles[i].getRigidBody();
-				rigid.setLinearVelocity(new Ammo.btVector3(calculate_velocity(this.vac.getPos()[0],this.particles[i].getPos()[0])
-					,calculate_velocity(this.vac.getPos()[1],this.particles[i].getPos()[1]),calculate_velocity(this.vac.getPos()[2],this.particles[i].getPos()[2])));
+				rigid.setLinearVelocity(calculate_velocity(this.vac.getPos(),this.particles[i].getPos()));
 			}
+
+			if (dist<=0.4){
+				//Keeping track for the particles to despawn
+				dists.push(i);
+			}
+		}
+
+
+
+
+		for (var n = dists.length - 1; n >= 0; n--) {
+			//Despawning the particles
+
+			var index = rigidBodies.indexOf(rigidBodies.find(el => el == this.particles[dists[n]]));//find element
+			if (index > -1) {
+			  rigidBodies.splice(index, 1);
+			}
+
+			index = rigidBodiesBullet.indexOf(rigidBodiesBullet.find(el => el == this.particles[dists[n]].getRigidBody()));
+			if (index > -1) {
+			  rigidBodiesBullet.splice(index, 1);
+			}
+
+			index = this.particles.indexOf(this.particles[dists[n]]);
+			if (index > -1) {
+			  this.particles.splice(index, 1);
+			}
+		}
+
+		
+
+		shader_lamb.use();
+        var unif = shader_lamb.get_uniforms();
+
+
+		//Spawning new particles
+		for (var i = dists.length - 1; i >= 0; i--) {
+
+			//var object = create_object();
+			var object_loader = new ObjectLoader();
+			await object_loader.constructorAsync(this.gl,"../Objects/part.obj", "../Objects/Room-SW/textures/Yellow.png");
+            this.particles.push(object_loader);
+
+            var pos1=Math.random()*20;
+            var pos2=Math.random()*20;
+            var pos3=Math.random()*20;
+
+            var newPos = glMatrix.vec3.fromValues(pos1,0,pos2);
+            //var shape = new Ammo.btBoxShape(new Ammo.btVector3());
+
+            object_loader.setPosition(newPos);
+
+           	object_loader.createRigidBody(this.physicsWorld,0.01,this.particles[this.particles.length-1].getPos(),this.shape);
+
+            rigidBodies.push(this.particles[this.particles.length-1]);
+            rigidBodiesBullet.push(this.particles[this.particles.length-1].getRigidBody());
+
+            this.particles[this.particles.length-1].activateObject(shader_lamb, camera, unif['model']);
+
 		}
 
 	}
 
 
-	spawn_particles(shader_lamb, view, projection, camera){
+	spawn_particles(shader_lamb, unif, camera){
 
         shader_lamb.use();
         var unif = shader_lamb.get_uniforms();
-        this.gl.uniformMatrix4fv(unif['view'], false, view);
-        this.gl.uniformMatrix4fv(unif['proj'], false, projection);
 
         for(var i = 0;i<this.particles.length;i++){
 
         	this.particles[i].activateObject(shader_lamb, camera, unif['model']);
-            // this.particles[i].activate(shader_lamb);
-            // this.particles_comp[i].shader_activate(shader_lamb,this.particles[i],unif['model'],camera.get_position());
-            // this.particles[i].draw();
         }
 	}
 
@@ -116,14 +175,26 @@ class Particles{
 
 function calculate_velocity(pos1, pos2){
 
-	console.log(Math.abs((pos1-pos2)/10));
-	var velocity = -Math.abs((pos1-pos2)/10);
+	velocities = [];
 
-	if (velocity>0.5){
-		return 0.5;
+	var velocity = 0;
+
+	for (var i = 2; i >= 0; i--) {
+		velocity = 1/((pos1[i]-pos2[i])/10);
+
+		if (velocity>0.5){
+			velocities.push(0.5);
+		}
+		else if (velocity<-0.5){
+			velocities.push(-0.5);
+		}
+		else{
+			velocities.push(velocity);
+		}
 	}
-	else{
-		return velocity;
-	}
+
+	var ammo = new Ammo.btVector3(velocities[2], velocities[1],velocities[0]);
+
+	return ammo;
 
 }

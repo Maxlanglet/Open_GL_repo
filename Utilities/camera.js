@@ -253,7 +253,7 @@ var make_camera = function(canvas, positionInit, upInit, yaw, pitch,vac) {
         yoffset *= mouse_sensitivity;
 
         yaw += xoffset;
-        pitch += yoffset;
+        //pitch += yoffset;
 
         // Don't flip screen if pitch is out of bounds
         if (constrain_pitch) {
