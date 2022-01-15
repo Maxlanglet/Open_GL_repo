@@ -76,13 +76,14 @@
 
             //Load the object
             var floor =  new ObjectLoader();
-            await floor.constructorAsync(gl,"../Objects/Room-SW/mesh/sol.obj","../Objects/Room-SW/textures/Concreto_color.png");
+            await floor.constructorAsync(gl,"../Objects/Room-SW/mesh/sol.obj","../Objects/Room-SW/textures/Concreto_color.png",
+                "../Objects/Room-SW/textures/Concreto_Bump.png");
             floor.createRigidBody(physicsWorld,0,[0,-0.05 ,0],new Ammo.btBoxShape( new Ammo.btVector3( 30, 0, 30 ) ));
             lamb_objs.push(floor);
 
             for(var i = 1;i<21;i++){
                 var seat =  new ObjectLoader();
-                await seat.constructorAsync(gl,"../Objects/Room-SW/mesh/seat/seat_"+i.toString()+".obj","../Objects/Room-SW/textures/MaterialSofa_Base_color.png");
+                await seat.constructorAsync(gl,"../Objects/Room-SW/mesh/seat/seat_"+i.toString()+".obj","../Objects/Room-SW/textures/MaterialSofa_Base_color.png", "../Objects/Room-SW/textures/MaterialSofa_Normal_OpenGL.png");
                 seat.createRigidBody(physicsWorld,100,seat.getCenter(),new Ammo.btBoxShape( new Ammo.btVector3( scaleFactor*(seat.getMaxPos()[0]-seat.getMinPos()[0]),
                                                                         scaleFactor*(seat.getMaxPos()[1]-seat.getMinPos()[1]),
                                                                         scaleFactor*(seat.getMaxPos()[2]-seat.getMinPos()[2]) ) ));
@@ -93,7 +94,7 @@
 
             for(i = 1;i<10;i++){
                 var table =  new ObjectLoader();
-                await table.constructorAsync(gl,"../Objects/Room-SW/mesh/table/table_"+i.toString()+".obj","../Objects/Room-SW/textures/MaterialMesa_Base_color.png");
+                await table.constructorAsync(gl,"../Objects/Room-SW/mesh/table/table_"+i.toString()+".obj","../Objects/Room-SW/textures/MaterialMesa_Base_color.png", "../Objects/Room-SW/textures/MaterialMesa_Normal.png");
                 table.createRigidBody(physicsWorld,100,table.getCenter(),new Ammo.btBoxShape( new Ammo.btVector3( scaleFactor*(table.getMaxPos()[0]-table.getMinPos()[0]),
                     scaleFactor*(table.getMaxPos()[1]-table.getMinPos()[1]),
                     scaleFactor*(table.getMaxPos()[2]-table.getMinPos()[2]) ) ));
@@ -104,7 +105,7 @@
 
             for(i = 1;i<10;i++){
                 var barril =  new ObjectLoader();
-                await barril.constructorAsync(gl,"../Objects/Room-SW/mesh/barril/barril_"+i.toString()+".obj","../Objects/Room-SW/textures/Material_Barril_base_Color.png");
+                await barril.constructorAsync(gl,"../Objects/Room-SW/mesh/barril/barril_"+i.toString()+".obj","../Objects/Room-SW/textures/Material_Barril_base_Color.png", "../Objects/Room-SW/textures/Material_Barril_Normal_OpenGL.png");
                 barril.createRigidBody(physicsWorld,100,table.getCenter(),new Ammo.btBoxShape( new Ammo.btVector3( scaleFactor*(barril.getMaxPos()[0]-barril.getMinPos()[0]),
                     scaleFactor*(barril.getMaxPos()[1]-barril.getMinPos()[1]),
                     scaleFactor*(barril.getMaxPos()[2]-barril.getMinPos()[2]) ) ));
@@ -114,7 +115,7 @@
             }
 
             vac = new ObjectLoader();
-            await vac.constructorAsync(gl,"../Objects/robot-vacuum-cleaner-rob-vac/vac.obj","../Objects/robot-vacuum-cleaner-rob-vac/textures/internal_ground_ao_texture.jpeg",coef_refl = 1.2);
+            await vac.constructorAsync(gl,"../Objects/robot-vacuum-cleaner-rob-vac/vac.obj","../Objects/robot-vacuum-cleaner-rob-vac/textures/internal_ground_ao_texture.jpeg","nothing",coef_refl = 1.2);
             vac.translatePos(glMatrix.vec3.fromValues(0,10,0));
             var tmp = [];
             for(var j = 0;j<3;j++) {

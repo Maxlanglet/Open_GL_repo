@@ -2,7 +2,7 @@ class ObjectLoader {
     constructor() {
     }
 
-    async constructorAsync(gl,meshName,textureName,isCubemap=false,coef_refl= 0,needCenter=true) {
+    async constructorAsync(gl,meshName,textureName,bumpname='nothing',isCubemap=false,coef_refl= 0,needCenter=true) {
         this.mesh = await load_obj(meshName);
         this.obj = await make_object(gl, this.mesh);
         if(needCenter)
@@ -13,7 +13,7 @@ class ObjectLoader {
         if (isCubemap === true)
             this.shaderComps = await load_shader_cubemap(gl, textureName);
         else
-            this.shaderComps = await load_shader_lamb(gl, textureName);
+            this.shaderComps = await load_shader_lamb(gl, textureName, bumpname);
         this.tmpOpVec3 = glMatrix.vec3.create();
         this.tmpOpQuat = glMatrix.quat.create();
         this.rot = glMatrix.quat.create();
