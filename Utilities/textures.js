@@ -22,7 +22,7 @@ var make_texture = function(gl, url) {
     return texture;
 };
 
-var make_texture_cubemap = function(gl, folder_url, width=520, height=520) {
+var make_texture_cubemap = function(gl, folder_url, width=512, height=512) {
     var texture = gl.createTexture();
 
     // We need to specify the type of texture we are using

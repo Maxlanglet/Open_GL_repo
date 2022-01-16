@@ -25,13 +25,13 @@ class Particles{
             this.particles.push(this.object_loader);
             //this.particles_comp.push(sphere_shader_comps);
 
-            var pos1=Math.random()*20;
-            var pos2=Math.random()*20;
-            var pos3=Math.random()*20;
+            var pos1=(0.5-Math.random())*20;
+            var pos2=Math.random()*10;
+            var pos3=(0.5-Math.random())*20;
 
             //console.log(pos1, pos2);
 
-            var newPos = glMatrix.vec3.fromValues(pos1,0,pos2);
+            var newPos = glMatrix.vec3.fromValues(pos1,pos2,pos3);
             //var shape = new Ammo.btBoxShape(new Ammo.btVector3());
 
             this.particles[i].setPosition(newPos);
@@ -46,12 +46,8 @@ class Particles{
 	}
 
 
-	async update(rigidBodies, rigidBodiesBullet, shader_lamb, camera){
-
-
+	async update(rigidBodies, rigidBodiesBullet, shader_lamb, camera,physicWorld){
 		//Setting velocity to 0 in case of going too far
-
-
 		var pos = this.particles[0].getPos();
 		for (var i = this.particles.length - 1; i >= 0; i--) {
 			pos = this.particles[i].getPos();
@@ -61,11 +57,7 @@ class Particles{
 				}
 			}
 		}
-		
-
-
 		//to respawn particles
-
 		var dists = [];
 		for (var i = this.particles.length - 1; i >= 0; i--) {
 
@@ -85,12 +77,8 @@ class Particles{
 			}
 		}
 
-
-
-
 		for (var n = dists.length - 1; n >= 0; n--) {
 			//Despawning the particles
-
 			var index = rigidBodies.indexOf(rigidBodies.find(el => el == this.particles[dists[n]]));//find element
 			if (index > -1) {
 			  rigidBodies.splice(index, 1);
@@ -98,7 +86,8 @@ class Particles{
 
 			index = rigidBodiesBullet.indexOf(rigidBodiesBullet.find(el => el == this.particles[dists[n]].getRigidBody()));
 			if (index > -1) {
-			  rigidBodiesBullet.splice(index, 1);
+				physicWorld.removeRigidBody(rigidBodiesBullet[i]);
+			  	rigidBodiesBullet.splice(index, 1);
 			}
 
 			index = this.particles.indexOf(this.particles[dists[n]]);
@@ -106,28 +95,21 @@ class Particles{
 			  this.particles.splice(index, 1);
 			}
 		}
-
-		
-
 		shader_lamb.use();
         var unif = shader_lamb.get_uniforms();
 
-
 		//Spawning new particles
 		for (var i = dists.length - 1; i >= 0; i--) {
-
 			//var object = create_object();
 			var object_loader = new ObjectLoader();
 			await object_loader.constructorAsync(this.gl,"../Objects/part.obj", "../Objects/Room-SW/textures/Yellow.png");
             this.particles.push(object_loader);
 
-            var pos1=Math.random()*20;
-            var pos2=Math.random()*20;
-            var pos3=Math.random()*20;
+            var pos1=(0.5-Math.random())*20;
+            var pos2=Math.random()*10;
+            var pos3=(0.5-Math.random())*20;
 
-            var newPos = glMatrix.vec3.fromValues(pos1,0,pos2);
-            //var shape = new Ammo.btBoxShape(new Ammo.btVector3());
-
+            var newPos = glMatrix.vec3.fromValues(pos1,pos2,pos3);
             object_loader.setPosition(newPos);
 
            	object_loader.createRigidBody(this.physicsWorld,0.01,this.particles[this.particles.length-1].getPos(),this.shape);

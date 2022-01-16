@@ -8,7 +8,6 @@ const shader_V_lamb = `
       attribute vec3 bitangent;
 
       varying vec2 v_texcoord;
-      varying vec3 v_color;
       varying vec3 v_frag_coord;
 
       varying mat3 v_TBN;
@@ -27,10 +26,6 @@ const shader_V_lamb = `
         
         //Texture
         v_texcoord = texcoord;
-
-        // We can display the normals or bitangent as a color to debug
-        v_color = (normal+1.0)/2.0;
-        //v_color = (bitangent+1.0)/2.0;
       
         //create matrix for the TBN space
         vec3 T = normalize(vec3(M * vec4(tangent, 0.0)));
@@ -51,11 +46,6 @@ const shader_F_lamb = `
 
       #define NB_LIGHTS 13
 
-
-      // varying vec3 v_diffuse;
-      // varying vec3 v_reflective;
-
-
       uniform vec3 view_dir;
       uniform vec3 u_lights_pos[NB_LIGHTS];
       uniform float coef_att_const;
@@ -64,14 +54,9 @@ const shader_F_lamb = `
       
       varying vec2 v_texcoord;
 
-      varying vec3 v_color;
       varying vec3 v_frag_coord;
       varying mat3 v_TBN;
       varying mat4 v_itM;
-
-
-      // ///////
-      
       float ambient_l = 0.25;
       
       uniform float coef_emitted;
@@ -84,7 +69,7 @@ const shader_F_lamb = `
       
       void main() {
 
-      //   //bumpmap
+        //bumpmap
         vec3 normal = texture2D(u_bumpmap, vec2(v_texcoord.x, 1.0-v_texcoord.y)).rgb;
 
         normal = normalize(normal*2.0 - 1.0);
@@ -92,8 +77,6 @@ const shader_F_lamb = `
 
         //Normal
         vec3 norm = vec3(v_itM * vec4(normal, 1.0));
-      
-        // float diffusion = max(0.0, dot(normal, L));
 
         vec3 diff = vec3(0.0);
         vec3 refl = vec3(0.0);
@@ -103,42 +86,18 @@ const shader_F_lamb = `
             float att_coef = 1.0/(coef_att_const+coef_att_linear*dist_light+coef_att_quadratic*dist_light*dist_light);
             //Gouraud diffuse
             vec3 L = normalize(u_lights_pos[i] - v_frag_coord.xyz);
-            float prod_vec = max(0.0, dot(normal, L));
+            float prod_vec = max(0.0, dot(norm, L));
 
             diff += vec3(prod_vec);//*att_coef;
             //Reflec
-            vec3 R = reflect(-L,normal);
+            vec3 R = reflect(-L,norm);
             vec3 view_dir = normalize(view_dir.xyz - v_frag_coord.xyz);
             refl += vec3(pow(max(0.0,dot(R,view_dir)),32.0))*att_coef;
         }
-        // v_diffuse = diff;
-        // v_reflective = refl;
-
-
+ 
         vec4 texture = texture2D(u_texture, vec2(v_texcoord.x, 1.0-v_texcoord.y));
         vec4 diff_refl = vec4(diff*coef_diff + refl*coef_refl,1.0);
         gl_FragColor = (vec4(vec3(coef_emitted),1.0) + vec4(vec3(ambient_l),1.0) + diff_refl)*texture;
-
-
-
-        ///////
-
-
-        // // Phong: diffuse light is computed for every fragment
-        // vec3 L = normalize(u_lights_pos[0] - v_frag_coord.xyz);
-
-        // //vec3 get normal from bump map
-        // vec3 normal = texture2D(u_bumpmap, vec2(v_texcoord.x, 1.0-v_texcoord.y)).rgb;
-        // normal = normalize(normal*2.0 - 1.0);
-        // //transform normal using TBN space
-        // normal = normalize(v_TBN * normal);
-      
-        // float diffusion = max(0.0, dot(normal, L));
-        // float ambient = 0.25;
-        
-        // vec3 color = vec3(diffusion+ambient);
-        // gl_FragColor = vec4(color, 1.0) * texture2D(u_texture, vec2(v_texcoord.x, 1.0-v_texcoord.y));
-        
       }
     `;
 
@@ -148,9 +107,8 @@ var load_shader_lamb = async function(gl,path_texture,path_bump="nothing",coef_d
 
     var bump_map = make_texture(gl,"../Objects/Room-SW/textures/Material_Porta_Normal_OpenGL.png");
 
-    if (path_bump!="nothing"){
+    if (path_bump!=="nothing"){
       bump_map = make_texture(gl,path_bump);
-      console.log(path_bump);
     }
 
     const lights_pos = [glMatrix.vec3.fromValues(4.5501, 2.2558, 4.153),
@@ -170,7 +128,7 @@ var load_shader_lamb = async function(gl,path_texture,path_bump="nothing",coef_d
     const NB_LIGHTS = lights_pos.length;
 
     let isFirst = true;
-    var u_view_dir,coef_diff_loc,coef_refl_loc,coef_emit_loc, u_itM,u_lights_pos,u_tex,coef_att_const_loc,coef_att_linear_loc,coef_att_quadratic_loc = null;
+    var u_view_dir,coef_diff_loc,coef_refl_loc,coef_emit_loc, u_itM,u_lights_pos,u_tex,coef_att_const_loc,coef_att_linear_loc,coef_att_quadratic_loc,u_bumpmap = null;
 
     function getLocation(shader){
         u_view_dir = gl.getUniformLocation(shader.program, 'view_dir');
@@ -186,9 +144,8 @@ var load_shader_lamb = async function(gl,path_texture,path_bump="nothing",coef_d
             u_lights_pos.push(gl.getUniformLocation(shader.program, 'u_lights_pos['+i.toString()+']'));
         u_tex = gl.getUniformLocation(shader.program, 'u_texture');
 
-
         u_bumpmap = gl.getUniformLocation(shader.program, 'u_bumpmap');
-        isFirst = false;
+        //isFirst = false;
     }
 
     function shader_activate(shader,mesh,pos_model,view_dir) {

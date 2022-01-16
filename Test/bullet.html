@@ -15,7 +15,7 @@
     padding-right: 0;
     margin-left: auto;
     margin-right: auto;
-    display: block;" id="webgl_canvas" width="1280" height="720"> </canvas>
+    display: block;" id="webgl_canvas" width="500" height="500"> </canvas>
 <div style="
     padding-left: 0;
     padding-right: 0;
@@ -32,6 +32,7 @@
 <script language="javascript" type="text/javascript" src="../Shaders/shader_cubemap.js"></script>
 <script language="javascript" type="text/javascript" src="../Utilities/ammo.js"></script>
 <script language="javascript" type="text/javascript" src="../Utilities/FullObjectLoader.js"></script>
+<script language="javascript" type="text/javascript" src="../Utilities/Particles.js"></script>
 
 <script>
     async function main() {
@@ -84,7 +85,7 @@
             rigidBodiesBullet.push(floor.getRigidBody());
 
             var wall =  new ObjectLoader();
-            await wall.constructorAsync(gl,'../Objects/Room-SW/mesh/interieur_sw.obj',"../Objects/Room-SW/textures/Concreto_color.png","../Objects/Room-SW/mesh/wall_shape.obj");
+            await wall.constructorAsync(gl,'../Objects/Room-SW/mesh/interieur_sw.obj',"../Objects/Room-SW/textures/Concreto_color.png","../Objects/Room-SW/mesh/wall_shape.obj", "../Objects/Room-SW/textures/Concreto_Bump.png");
             //await wall.constructorAsync(gl,'../Objects/Room-SW/mesh/interieur_sw.obj',"../Objects/Room-SW/textures/Concreto_color.png","");
             wall.createRigidBody(physicsWorld,0,wall.getCenter(),await wall.getShape(scaleFactor));
             lamb_objs.push(wall);
@@ -92,14 +93,14 @@
             rigidBodiesBullet.push(wall.getRigidBody());
 
             var bar =  new ObjectLoader();
-            await bar.constructorAsync(gl,"../Objects/Room-SW/mesh/bar.obj","../Objects/Room-SW/textures/Material_Bancada_Base_color.png","",coef_refl = 1.2);
+            await bar.constructorAsync(gl,"../Objects/Room-SW/mesh/bar.obj","../Objects/Room-SW/textures/Material_Bancada_Base_color.png","","../Objects/Room-SW/textures/Material_Bancada_Normal_OpenGL.png",coef_refl = 1.2);
             bar.createRigidBody(physicsWorld,0,bar.getCenter(),await bar.getShape(scaleFactor));
             lamb_objs.push(bar);
             rigidBodies.push(bar);
             rigidBodiesBullet.push(bar.getRigidBody());
 
             var barUp =  new ObjectLoader();
-            await barUp.constructorAsync(gl,"../Objects/Room-SW/mesh/bar_plafond.obj","../Objects/Room-SW/textures/Material_Bancada_Teto_Base_color.png","",coef_refl = 1.2);
+            await barUp.constructorAsync(gl,"../Objects/Room-SW/mesh/bar_plafond.obj","../Objects/Room-SW/textures/Material_Bancada_Teto_Base_color.png","","../Objects/Room-SW/textures/Material_Bancada_Teto_Normal_OpenGL.png",coef_refl = 1.2);
             barUp.createRigidBody(physicsWorld,0,barUp.getCenter(),await barUp.getShape(scaleFactor));
             lamb_objs.push(barUp);
             rigidBodies.push(barUp);
@@ -107,7 +108,7 @@
 
             for(var i = 1;i<3;i++) {
                 var machine = new ObjectLoader();
-                await machine.constructorAsync(gl, "../Objects/Room-SW/mesh/machine_"+i.toString()+".obj", "../Objects/Room-SW/textures/Material_Maquina"+i.toString()+"_Base_color.png", "",coef_refl = 1.2);
+                await machine.constructorAsync(gl, "../Objects/Room-SW/mesh/machine_"+i.toString()+".obj", "../Objects/Room-SW/textures/Material_Maquina"+i.toString()+"_Base_color.png", "", "../Objects/Room-SW/textures/Material_Maquina"+i.toString()+"_Normal_OpenGL.png",coef_refl = 1.2);
                 machine.createRigidBody(physicsWorld, 0, machine.getCenter(), await machine.getShape(scaleFactor));
                 lamb_objs.push(machine);
                 rigidBodies.push(machine);
@@ -115,14 +116,14 @@
             }
 
             var tableIntBar =  new ObjectLoader();
-            await tableIntBar.constructorAsync(gl,"../Objects/Room-SW/mesh/table_int.obj","../Objects/Room-SW/textures/Material_Mesa_Meio_Base_color.png","",coef_refl = 1.2);
+            await tableIntBar.constructorAsync(gl,"../Objects/Room-SW/mesh/table_int.obj","../Objects/Room-SW/textures/Material_Mesa_Meio_Base_color.png","","../Objects/Room-SW/textures/Material_Mesa_Meio_Normal_OpenGL.png",coef_refl = 1.2);
             tableIntBar.createRigidBody(physicsWorld,0,tableIntBar.getCenter(),await tableIntBar.getShape(scaleFactor));
             lamb_objs.push(tableIntBar);
             rigidBodies.push(tableIntBar);
             rigidBodiesBullet.push(tableIntBar.getRigidBody());
 
             var boxes =  new ObjectLoader();
-            await boxes.constructorAsync(gl,"../Objects/Room-SW/mesh/boxes.obj","../Objects/Room-SW/textures/Material_Caixote_Base_Color.png","",coef_refl = 1.2);
+            await boxes.constructorAsync(gl,"../Objects/Room-SW/mesh/boxes.obj","../Objects/Room-SW/textures/Material_Caixote_Base_Color.png","","../Objects/Room-SW/textures/Material_Caixote_Normal_OpenGL.png",coef_refl = 1.2);
             boxes.createRigidBody(physicsWorld,0,boxes.getCenter(),await boxes.getShape(scaleFactor));
             lamb_objs.push(boxes);
             rigidBodies.push(boxes);
@@ -130,7 +131,7 @@
 
             for( i = 1;i<14;i++){
                 var light =  new ObjectLoader();
-                await light.constructorAsync(gl,"../Objects/Room-SW/mesh/lights/light_"+i.toString()+".obj","../Objects/Room-SW/textures/Yellow.png","",coef_refl = 1.2,coef_emit=100.0);
+                await light.constructorAsync(gl,"../Objects/Room-SW/mesh/lights/light_"+i.toString()+".obj","../Objects/Room-SW/textures/Yellow.png","","nothing",coef_refl = 1.2,coef_emit=100.0);
                 light.createRigidBody(physicsWorld,0,light.getCenter(),new Ammo.btBoxShape( new Ammo.btVector3( scaleFactor*(light.getMaxPos()[0]-light.getMinPos()[0]),
                     scaleFactor*(light.getMaxPos()[1]-light.getMinPos()[1]),
                     scaleFactor*(light.getMaxPos()[2]-light.getMinPos()[2]) ) ));
@@ -141,7 +142,7 @@
 
             for( i = 1;i<21;i++){
                 var seat =  new ObjectLoader();
-                await seat.constructorAsync(gl,"../Objects/Room-SW/mesh/seat/seat_"+i.toString()+".obj","../Objects/Room-SW/textures/MaterialSofa_Base_color.png","");
+                await seat.constructorAsync(gl,"../Objects/Room-SW/mesh/seat/seat_"+i.toString()+".obj","../Objects/Room-SW/textures/MaterialSofa_Base_color.png","","../Objects/Room-SW/textures/MaterialSofa_Normal_OpenGL.png");
                 seat.createRigidBody(physicsWorld,100,seat.getCenter(),new Ammo.btBoxShape( new Ammo.btVector3( scaleFactor*(seat.getMaxPos()[0]-seat.getMinPos()[0]),
                                                                         scaleFactor*(seat.getMaxPos()[1]-seat.getMinPos()[1]),
                                                                         scaleFactor*(seat.getMaxPos()[2]-seat.getMinPos()[2]) ) ));
@@ -152,7 +153,7 @@
 
             for(i = 1;i<10;i++){
                 var table =  new ObjectLoader();
-                await table.constructorAsync(gl,"../Objects/Room-SW/mesh/table/table_"+i.toString()+".obj","../Objects/Room-SW/textures/MaterialMesa_Base_color.png","");
+                await table.constructorAsync(gl,"../Objects/Room-SW/mesh/table/table_"+i.toString()+".obj","../Objects/Room-SW/textures/MaterialMesa_Base_color.png","","../Objects/Room-SW/textures/MaterialMesa_Normal_OpenGL.png");
                 table.createRigidBody(physicsWorld,100,table.getCenter(),new Ammo.btBoxShape( new Ammo.btVector3( scaleFactor*(table.getMaxPos()[0]-table.getMinPos()[0]),
                     scaleFactor*(table.getMaxPos()[1]-table.getMinPos()[1]),
                     scaleFactor*(table.getMaxPos()[2]-table.getMinPos()[2]) ) ));
@@ -164,7 +165,7 @@
 
             for(i = 1;i<10;i++){
                 var barril =  new ObjectLoader();
-                await barril.constructorAsync(gl,"../Objects/Room-SW/mesh/barril/barril_"+i.toString()+".obj","../Objects/Room-SW/textures/Material_Barril_base_Color.png","");
+                await barril.constructorAsync(gl,"../Objects/Room-SW/mesh/barril/barril_"+i.toString()+".obj","../Objects/Room-SW/textures/Material_Barril_base_Color.png","","../Objects/Room-SW/textures/Material_Barril_Normal_OpenGL.png");
                 barril.createRigidBody(physicsWorld,100,barril.getCenter(),new Ammo.btBoxShape( new Ammo.btVector3( scaleFactor*(barril.getMaxPos()[0]-barril.getMinPos()[0]),
                     scaleFactor*(barril.getMaxPos()[1]-barril.getMinPos()[1]),
                     scaleFactor*(barril.getMaxPos()[2]-barril.getMinPos()[2]) ) ));
@@ -174,7 +175,7 @@
             }
 
             var vac = new ObjectLoader();
-            await vac.constructorAsync(gl,"../Objects/robot-vacuum-cleaner-rob-vac/vac.obj","../Objects/robot-vacuum-cleaner-rob-vac/textures/internal_ground_ao_texture.jpeg","",coef_refl = 1.2);
+            await vac.constructorAsync(gl,"../Objects/robot-vacuum-cleaner-rob-vac/vac.obj","../Objects/robot-vacuum-cleaner-rob-vac/textures/internal_ground_ao_texture.jpeg","",'nothing',coef_refl = 1.2);
             vac.translatePos(glMatrix.vec3.fromValues(15,2,0));
             var tmp = [];
             for(var j = 0;j<3;j++) {
@@ -188,19 +189,18 @@
 
             //Particles
 
-            particles = new Particles(100, gl, physicsWorld, vac);
+            particles = new Particles(40, gl, physicsWorld, vac);
 
             await particles.initialize();
 
             var parts = particles.get_particles();
-            //var parts_rigid = particles.get_particles_rigid();
             for (var i = particles.get_num_part() - 1; i >= 0; i--) {
                 rigidBodies.push(parts[i]);
                 rigidBodiesBullet.push(parts[i].getRigidBody());
             }
 
             cubeMap =  new ObjectLoader();
-            await cubeMap.constructorAsync(gl,"../Objects/Room-SW/mesh/cubemap.obj","../Objects/Room-SW/textures/nightpass","",isCubemap=true);
+            await cubeMap.constructorAsync(gl,"../Objects/Room-SW/mesh/cube.obj","../Objects/nightpass","","nothing",isCubemap=true);
 
             //Different shaders here
             shader_lamb = make_shader(gl, shader_V_lamb, shader_F_lamb);
@@ -251,7 +251,7 @@
       function updatePhysics(deltaTime){
         physicsWorld.stepSimulation(deltaTime,10);
 
-        particles.update(rigidBodies, rigidBodiesBullet, shader_lamb, camera);
+        particles.update(rigidBodies, rigidBodiesBullet, shader_lamb, camera,physicsWorld);
 
         for(let i = 0;i<rigidBodiesBullet.length;i++){
             let objOpenGL = rigidBodies[ i ];
@@ -282,9 +282,13 @@
     //Bullet
     Ammo().then(await initBullet );
     async function initBullet(){
+        console.log("------------ Initialization ------------");
         tmpTrans = new Ammo.btTransform();
+        console.log("------------ PhysicWorld ------------");
         setupPhysicsWorld();
+        console.log("------------ SetupGraphic ------------");
         await setupGraphics();
+        console.log("------------ StartFrame 0 ------------");
         renderFrame(0);
     }
   }

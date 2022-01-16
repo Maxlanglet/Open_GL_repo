@@ -10,6 +10,9 @@ const shader_V_cubemap = `
       void main() {
         vec4 frag_coord = vec4(position, 1.0);
         gl_Position = (P*mat4(mat3(V))*frag_coord).xyww;
+        
+        //remove errors/warning
+        vec3 errorHandler = (vec3(texcoord,1.0)+position+normal)*0.0;
 
         v_texcoord = position;
       }
