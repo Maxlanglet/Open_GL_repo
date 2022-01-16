@@ -66,20 +66,36 @@ class Particles{
 				+Math.pow(this.vac.getPos()[1]-this.particles[i].getPos()[1],2)+Math.pow(this.vac.getPos()[2]-this.particles[i].getPos()[2],2));
 
 
-			if (dist<=this.vacc_radius){
+			if (dist<=this.vacc_radius && dist>0.4){
 				var rigid = this.particles[i].getRigidBody();
 				rigid.setLinearVelocity(calculate_velocity(this.vac.getPos(),this.particles[i].getPos()));
 			}
 
-			if (dist<=0.4){
+			else if (dist<=0.4){
 				//Keeping track for the particles to despawn
 				dists.push(i);
 			}
 		}
 
 		for (var n = dists.length - 1; n >= 0; n--) {
+
+			var index = rigidBodiesBullet.indexOf(rigidBodiesBullet.find(el => el == this.particles[dists[n]].getRigidBody()));
+			if (index > -1) {
+				var pos1=(0.5-Math.random())*10;
+				var pos2=30;
+				var pos3=(0.5-Math.random())*10;
+				//rigidBodiesBullet[index].setPosition(new Ammo.btVector3(pos1,pos2,pos3));
+				rigidBodiesBullet[index].setLinearVelocity(new Ammo.btVector3(pos1,pos2,pos3));
+				/*let tmpTrans = new Ammo.btTransform();
+				tmpTrans.setIdentity();
+				tmpTrans.setRotation( new Ammo.btQuaternion( 0, 0, 0, 1 ) );
+				tmpTrans.setOrigin(new Ammo.btVector3(pos1,pos2,pos3));
+				rigidBodiesBullet[index].getMotionState().setWorldTransform(tmpTrans)*/
+				//rigidBodiesBullet.splice(index, 1);
+			}
+
 			//Despawning the particles
-			var index = rigidBodies.indexOf(rigidBodies.find(el => el == this.particles[dists[n]]));//find element
+			/*var index = rigidBodies.indexOf(rigidBodies.find(el => el == this.particles[dists[n]]));//find element
 			if (index > -1) {
 			  rigidBodies.splice(index, 1);
 			}
@@ -93,9 +109,9 @@ class Particles{
 			index = this.particles.indexOf(this.particles[dists[n]]);
 			if (index > -1) {
 			  this.particles.splice(index, 1);
-			}
+			}*/
 		}
-		shader_lamb.use();
+		/*shader_lamb.use();
         var unif = shader_lamb.get_uniforms();
 
 		//Spawning new particles
@@ -119,7 +135,7 @@ class Particles{
 
             this.particles[this.particles.length-1].activateObject(shader_lamb, camera, unif['model']);
 
-		}
+		}*/
 
 	}
 
