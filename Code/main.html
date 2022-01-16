@@ -1,88 +1,269 @@
 <!DOCTYPE html>
 <html>
-<head>
-</head>
-<body>
-<canvas id="webgl_canvas" width="1280" height="720"></canvas>
-<div id="fps"></div>
-<div id="camera_mat"></div>
-<div id="proj_mat"></div>
+<body style="background-image: url('../extra_rsc/background.jpg');">
+<audio src="../extra_rsc/star-wars-cantina.mp3" autoplay> </audio>
+<div id="logo" style="background-image: url('../extra_rsc/starvacuum.png');
+    padding-left: 0;
+    padding-right: 0;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+    width: 800px;
+    height:200px;"></div>
+<canvas style="
+    padding-left: 0;
+    padding-right: 0;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;" id="webgl_canvas" width="1280" height="720"> </canvas>
+<div style="
+    padding-left: 0;
+    padding-right: 0;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;" id="fps"></div>
 
 <script src="../Utilities/gl-matrix-min.js"></script>
-<script language="javascript" type="text/javascript" src="../Utilities/cam.js"></script>
+<script language="javascript" type="text/javascript" src="../Utilities/camera.js"></script>
 <script language="javascript" type="text/javascript" src="../Utilities/shaders.js"></script>
 <script language="javascript" type="text/javascript" src="../Utilities/textures.js"></script>
 <script language="javascript" type="text/javascript" src="../Utilities/objects_02.js"></script>
-<script language="javascript" type="text/javascript" src="../Shaders/wall.js"></script>
-<script language="javascript" type="text/javascript" src="../Shaders/seat_all.js"></script>
-<script language="javascript" type="text/javascript" src="../Utilities/vacuum.js"></script>
+<script language="javascript" type="text/javascript" src="../Shaders/shader_Lamb_obj.js"></script>
+<script language="javascript" type="text/javascript" src="../Shaders/shader_cubemap.js"></script>
+<script language="javascript" type="text/javascript" src="../Utilities/ammo.js"></script>
+<script language="javascript" type="text/javascript" src="../Utilities/FullObjectLoader.js"></script>
+<script language="javascript" type="text/javascript" src="../Utilities/Particles.js"></script>
+
 <script>
     async function main() {
         // Boilerplate code
         const canvas = document.getElementById('webgl_canvas');
-        c_width = canvas.width
-        c_height = canvas.height
+        c_width = canvas.width;
+        c_height = canvas.height;
         const gl = canvas.getContext('webgl');
 
-        // Enable tests for better rendering
-        gl.enable(gl.DEPTH_TEST);
-        //gl.enable(gl.CULL_FACE); // cull hidden faces behind normals!
+        let physicsWorld;
+        let lamb_objs=[];
+        let rigidBodies = [];
+        let rigidBodiesBullet = [];
+        let camera;
+        let shader_lamb;
+        let shader_cubemap;
+        let cubeMap;
+        let projection;
+        let view;
+        let tmpTrans; //Tmp ammo.js tansform obj
+        let deltaTime = 0;
+        const scaleFactor = 0.55;
+        let particles;
 
-        //Load the object
+        function setupPhysicsWorld(){
+            //bt prefix for Bullet
+            let collisionConfiguration  = new Ammo.btDefaultCollisionConfiguration(),
+                dispatcher              = new Ammo.btCollisionDispatcher(collisionConfiguration),
+                overlappingPairCache    = new Ammo.btDbvtBroadphase(), //Alg uses BB to compute collision
+                solver                  = new Ammo.btSequentialImpulseConstraintSolver(); //Objets to interact properly (gravity,game logic, etc)
 
-        var vac = await load_obj('../Objects/vac.obj');
-        var vac_obj = await make_object(gl, vac)
-        var vac_shader_comps = await load_shader_wall(gl);
-        //Define what needed
+            physicsWorld           = new Ammo.btDiscreteDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
+            physicsWorld.setGravity(new Ammo.btVector3(0, -0.5, 0));
+        }
 
-        var vac_shader = make_shader(gl, (vac_shader_comps).shader_v,(vac_shader_comps).shader_f);
+        async function setupGraphics() {
+            // Enable tests for better rendering
+            gl.enable(gl.DEPTH_TEST);
+            //gl.enable(gl.CULL_FACE); // cull hidden faces behind normals!
 
-        //Camera parameters
-        position = glMatrix.vec3.fromValues(1, 0, -6.0)
-        placeholder = glMatrix.vec3.fromValues(1, 0, -6.0)
+            //Load the object
+            var tmpShape = null;
+            var floor =  new ObjectLoader();
+            await floor.constructorAsync(gl,"../Objects/Room-SW/mesh/sol.obj","../Objects/Room-SW/textures/Concreto_color.png","", "../Objects/Room-SW/textures/Concreto_Bump.png");
+            floor.createRigidBody(physicsWorld,0,floor.getCenter(),new Ammo.btBoxShape( new Ammo.btVector3( scaleFactor*(floor.getMaxPos()[0]-floor.getMinPos()[0]),
+                scaleFactor*(floor.getMaxPos()[1]-floor.getMinPos()[1]),
+                scaleFactor*(floor.getMaxPos()[2]-floor.getMinPos()[2]) ) ));
+            lamb_objs.push(floor);
+            rigidBodies.push(floor);
+            rigidBodiesBullet.push(floor.getRigidBody());
 
+            var wall =  new ObjectLoader();
+            await wall.constructorAsync(gl,'../Objects/Room-SW/mesh/interieur_sw.obj',"../Objects/Room-SW/textures/Concreto_color.png","../Objects/Room-SW/mesh/wall_shape.obj", "../Objects/Room-SW/textures/Concreto_Bump.png");
+            wall.createRigidBody(physicsWorld,0,wall.getCenter(),await wall.getShape(scaleFactor));
+            lamb_objs.push(wall);
+            rigidBodies.push(wall);
+            rigidBodiesBullet.push(wall.getRigidBody());
 
-        var vac_pos = glMatrix.mat3.add(placeholder,placeholder,glMatrix.vec3.fromValues(-0.5,0.0,2.0));
-        var vacuum = await make_vacuum(vac, vac_obj, vac_shader_comps, vac_shader, placeholder, gl);
+            var bar =  new ObjectLoader();
+            await bar.constructorAsync(gl,"../Objects/Room-SW/mesh/bar.obj","../Objects/Room-SW/textures/Material_Bancada_Base_color.png","","../Objects/Room-SW/textures/Material_Bancada_Normal_OpenGL.png",coef_refl = 1.2);
+            bar.createRigidBody(physicsWorld,0,bar.getCenter(),await bar.getShape(scaleFactor));
+            lamb_objs.push(bar);
+            rigidBodies.push(bar);
+            rigidBodiesBullet.push(bar.getRigidBody());
 
+            var barUp =  new ObjectLoader();
+            await barUp.constructorAsync(gl,"../Objects/Room-SW/mesh/bar_plafond.obj","../Objects/Room-SW/textures/Material_Bancada_Teto_Base_color.png","","../Objects/Room-SW/textures/Material_Bancada_Teto_Normal_OpenGL.png",coef_refl = 1.2);
+            barUp.createRigidBody(physicsWorld,0,barUp.getCenter(),await barUp.getShape(scaleFactor));
+            lamb_objs.push(barUp);
+            rigidBodies.push(barUp);
+            rigidBodiesBullet.push(barUp.getRigidBody());
 
-        up = glMatrix.vec3.fromValues(0.0, 1.0, 0.0)
-        yaw = -90.0
-        pitch = 0.0
-        var camera = make_camera(canvas, position, up, yaw, pitch, vacuum);
-        var projection = camera.get_projection(45.0, c_width / c_height, 0.01, 100.0);
+            for(var i = 1;i<3;i++) {
+                var machine = new ObjectLoader();
+                await machine.constructorAsync(gl, "../Objects/Room-SW/mesh/machine_"+i.toString()+".obj", "../Objects/Room-SW/textures/Material_Maquina"+i.toString()+"_Base_color.png", "", "../Objects/Room-SW/textures/Material_Maquina"+i.toString()+"_Normal_OpenGL.png",coef_refl = 1.2);
+                machine.createRigidBody(physicsWorld, 0, machine.getCenter(), await machine.getShape(scaleFactor));
+                lamb_objs.push(machine);
+                rigidBodies.push(machine);
+                rigidBodiesBullet.push(machine.getRigidBody());
+            }
 
+            var tableIntBar =  new ObjectLoader();
+            await tableIntBar.constructorAsync(gl,"../Objects/Room-SW/mesh/table_int.obj","../Objects/Room-SW/textures/Material_Mesa_Meio_Base_color.png","","../Objects/Room-SW/textures/Material_Mesa_Meio_Normal_OpenGL.png",coef_refl = 1.2);
+            tableIntBar.createRigidBody(physicsWorld,0,tableIntBar.getCenter(),await tableIntBar.getShape(scaleFactor));
+            lamb_objs.push(tableIntBar);
+            rigidBodies.push(tableIntBar);
+            rigidBodiesBullet.push(tableIntBar.getRigidBody());
 
-        //place vacuum
-        vacuum.translate(vac_pos);
+            var boxes =  new ObjectLoader();
+            await boxes.constructorAsync(gl,"../Objects/Room-SW/mesh/boxes.obj","../Objects/Room-SW/textures/Material_Caixote_Base_Color.png","","../Objects/Room-SW/textures/Material_Caixote_Normal_OpenGL.png",coef_refl = 1.2);
+            boxes.createRigidBody(physicsWorld,0,boxes.getCenter(),await boxes.getShape(scaleFactor));
+            lamb_objs.push(boxes);
+            rigidBodies.push(boxes);
+            rigidBodiesBullet.push(boxes.getRigidBody());
 
-        var deltaTime = 0;
+            for( i = 1;i<14;i++){
+                var light =  new ObjectLoader();
+                await light.constructorAsync(gl,"../Objects/Room-SW/mesh/lights/light_"+i.toString()+".obj","../Objects/Room-SW/textures/Yellow.png","","nothing",coef_refl = 1.2,coef_emit=100.0);
+                light.createRigidBody(physicsWorld,0,light.getCenter(),new Ammo.btBoxShape( new Ammo.btVector3( scaleFactor*(light.getMaxPos()[0]-light.getMinPos()[0]),
+                    scaleFactor*(light.getMaxPos()[1]-light.getMinPos()[1]),
+                    scaleFactor*(light.getMaxPos()[2]-light.getMinPos()[2]) ) ));
+                lamb_objs.push(light);
+                rigidBodies.push(light);
+                rigidBodiesBullet.push(light.getRigidBody());
+            }
 
-        function animate(time) {
+            for( i = 1;i<21;i++){
+                var seat =  new ObjectLoader();
+                await seat.constructorAsync(gl,"../Objects/Room-SW/mesh/seat/seat_"+i.toString()+".obj","../Objects/Room-SW/textures/MaterialSofa_Base_color.png","","../Objects/Room-SW/textures/MaterialSofa_Normal_OpenGL.png");
+                seat.createRigidBody(physicsWorld,100,seat.getCenter(),new Ammo.btBoxShape( new Ammo.btVector3( scaleFactor*(seat.getMaxPos()[0]-seat.getMinPos()[0]),
+                    scaleFactor*(seat.getMaxPos()[1]-seat.getMinPos()[1]),
+                    scaleFactor*(seat.getMaxPos()[2]-seat.getMinPos()[2]) ) ));
+                lamb_objs.push(seat);
+                rigidBodies.push(seat);
+                rigidBodiesBullet.push(seat.getRigidBody());
+            }
+
+            for(i = 1;i<10;i++){
+                var table =  new ObjectLoader();
+                await table.constructorAsync(gl,"../Objects/Room-SW/mesh/table/table_"+i.toString()+".obj","../Objects/Room-SW/textures/MaterialMesa_Base_color.png","","../Objects/Room-SW/textures/MaterialMesa_Normal_OpenGL.png");
+                table.createRigidBody(physicsWorld,100,table.getCenter(),new Ammo.btBoxShape( new Ammo.btVector3( scaleFactor*(table.getMaxPos()[0]-table.getMinPos()[0]),
+                    scaleFactor*(table.getMaxPos()[1]-table.getMinPos()[1]),
+                    scaleFactor*(table.getMaxPos()[2]-table.getMinPos()[2]) ) ));
+                lamb_objs.push(table);
+                rigidBodies.push(table);
+                rigidBodiesBullet.push(table.getRigidBody());
+            }
+
+            for(i = 1;i<10;i++){
+                var barril =  new ObjectLoader();
+                await barril.constructorAsync(gl,"../Objects/Room-SW/mesh/barril/barril_"+i.toString()+".obj","../Objects/Room-SW/textures/Material_Barril_base_Color.png","","../Objects/Room-SW/textures/Material_Barril_Normal_OpenGL.png");
+                barril.createRigidBody(physicsWorld,100,barril.getCenter(),new Ammo.btBoxShape( new Ammo.btVector3( scaleFactor*(barril.getMaxPos()[0]-barril.getMinPos()[0]),
+                    scaleFactor*(barril.getMaxPos()[1]-barril.getMinPos()[1]),
+                    scaleFactor*(barril.getMaxPos()[2]-barril.getMinPos()[2]) ) ));
+                lamb_objs.push(barril);
+                rigidBodies.push(barril);
+                rigidBodiesBullet.push(barril.getRigidBody());
+            }
+
+            var vac = new ObjectLoader();
+            await vac.constructorAsync(gl,"../Objects/robot-vacuum-cleaner-rob-vac/vac.obj","../Objects/robot-vacuum-cleaner-rob-vac/textures/internal_ground_ao_texture.jpeg","",'nothing',coef_refl = 1.2);
+            vac.translatePos(glMatrix.vec3.fromValues(15,2,0));
+            var tmp = [];
+            for(var j = 0;j<3;j++) {
+                tmp[j] = scaleFactor * (vac.getMaxPos()[j] - vac.getMinPos()[j]);
+                if(tmp[j] < 0.1) tmp[j] = 0.1;
+            }
+            vac.createRigidBody(physicsWorld,30,vac.getPos(),new Ammo.btBoxShape(new Ammo.btVector3(tmp[0],tmp[1],tmp[2])));
+            lamb_objs.push(vac);
+            rigidBodies.push(vac);
+            rigidBodiesBullet.push(vac.getRigidBody());
+
+            //Particles
+            particles = new Particles(40, gl, physicsWorld, vac);
+            await particles.initialize();
+            var parts = particles.get_particles();
+            for (var i = particles.get_num_part() - 1; i >= 0; i--) {
+                rigidBodies.push(parts[i]);
+                rigidBodiesBullet.push(parts[i].getRigidBody());
+            }
+
+            cubeMap =  new ObjectLoader();
+            await cubeMap.constructorAsync(gl,"../Objects/Room-SW/mesh/cube.obj","../Objects/nightpass","","nothing",isCubemap=true);
+
+            //Different shaders here
+            shader_lamb = make_shader(gl, shader_V_lamb, shader_F_lamb);
+            shader_cubemap = make_shader(gl,shader_V_cubemap,shader_F_cubemap);
+
+            //Camera parameters
+            let positionInit = glMatrix.vec3.fromValues(0, 0.5, -2.0);
+            let up = glMatrix.vec3.fromValues(0.0, 1.0, 0.0);
+            yaw = 0.0;
+            pitch = 0.0;
+            camera = make_camera(canvas, positionInit, up, yaw, pitch, vac);
+            projection = camera.get_projection(45.0, c_width / c_height, 0.01, 100.0);
+        }
+
+        function renderFrame(time) {
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+            //Draw loop
             deltaTime += 0.005;
             camera.update(deltaTime);
-            //Draw loop
-            gl.clearColor(0.5, 0.5, 0.5, 1);
-            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
+            //Update physics
+            updatePhysics(deltaTime);
+            //Update camera
             view = camera.get_view_matrix();
 
             //Shaders
+            shader_lamb.use();
+            var unif = shader_lamb.get_uniforms();
+            gl.uniformMatrix4fv(unif['view'], false, view);
+            gl.uniformMatrix4fv(unif['proj'], false, projection);
 
+            for (var i = 0; i < lamb_objs.length; i++) {
+                lamb_objs[i].activateObject(shader_lamb,camera,unif['model']);
+            }
+            particles.spawn_particles(shader_lamb, unif, camera);
 
-            vacuum.draw(view, projection);
-
-            placeholder = glMatrix.mat4.copy(placeholder, position);
-
-            // console.log("placeholder" ,placeholder)
-            // console.log("position", position)
-            // vac_shader.model = glMatrix.mat4.translate(vac_obj.model,vac_obj.model,glMatrix.mat3.add(placeholder,placeholder,glMatrix.vec3.fromValues(-0.5,0.0,2.0)));
+            gl.depthFunc(gl.LEQUAL);
+            shader_cubemap.use();
+            unif = shader_cubemap.get_uniforms();
+            gl.uniformMatrix4fv(unif['view'], false, view);
+            gl.uniformMatrix4fv(unif['proj'], false, projection);
+            cubeMap.activateObject(shader_cubemap,camera,unif['model']);
 
             fps(time);
-            window.requestAnimationFrame(animate); // While(True) loop!
+
+            window.requestAnimationFrame(renderFrame);
         }
 
-        var prev = 0
+        function updatePhysics(deltaTime){
+            physicsWorld.stepSimulation(deltaTime,10);
+
+            particles.update(rigidBodies, rigidBodiesBullet, shader_lamb, camera,physicsWorld);
+
+            for(let i = 0;i<rigidBodiesBullet.length;i++){
+                let objOpenGL = rigidBodies[ i ];
+                let objAmmo = rigidBodiesBullet[i];
+                let ms = objAmmo.getMotionState();
+                if ( ms ) {
+                    ms.getWorldTransform( tmpTrans );
+                    let p = tmpTrans.getOrigin();
+                    let q = tmpTrans.getRotation();
+                    //objOpenGL.setRotation(glMatrix.quat.fromValues(q.x(),q.y(),q.z(),q.w())); //Does not work ...
+                    var newPos = glMatrix.vec3.fromValues(p.x(),p.y(),p.z());
+                    objOpenGL.setPosition(newPos);
+                    camera.updatePosition();
+                }
+            }
+        }
+        var prev = 0;
         const fpsElem = document.querySelector("#fps");
         function fps(now) {
             now *= 0.001;
@@ -93,11 +274,20 @@
             return fps;
         }
 
-        animate(0);
-    };
+        //Bullet
+        Ammo().then(await initBullet );
+        async function initBullet(){
+            console.log("------------ Initialization ------------");
+            tmpTrans = new Ammo.btTransform();
+            console.log("------------ PhysicWorld ------------");
+            setupPhysicsWorld();
+            console.log("------------ SetupGraphic ------------");
+            await setupGraphics();
+            console.log("------------ StartFrame 0 ------------");
+            renderFrame(0);
+        }
+    }
     main();
 </script>
 </body>
 </html>
-
-

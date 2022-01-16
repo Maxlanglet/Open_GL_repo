@@ -16,11 +16,6 @@ class ObjectLoader {
             this.shaderComps = await load_shader_lamb(gl, textureName,bumpname,1.0,coef_refl,coef_emit);
 
         this.shapeName = shapeName;
-        this.tmpOpVec3 = glMatrix.vec3.create();
-        this.tmpOpQuat = glMatrix.quat.create();
-        this.rot = glMatrix.quat.create();
-        this.tmpOpMat4 = glMatrix.mat4.create();
-        this.prevRot = glMatrix.quat.create();
         this.prevPos = glMatrix.vec3.create();
     }
 
@@ -42,8 +37,6 @@ class ObjectLoader {
         transform.setRotation( new Ammo.btQuaternion( 0, 0, 0, 1 ) );
         let motionState = new Ammo.btDefaultMotionState( transform );
 
-        //Shape of the vac object
-        //let colShape = new Ammo.btBoxShape( new Ammo.btVector3( 0.15, 1.0, 0.1 ) );
         let colShape = shape;
         colShape.setMargin( 0.05 );
 
@@ -64,16 +57,8 @@ class ObjectLoader {
 
     getPos(){return glMatrix.mat4.getTranslation(glMatrix.vec3.create(),this.obj.model);}
 
-    getPrevPos(){
-        return this.prevPos;
-    }
-
     getRotation(){
         return glMatrix.mat4.getRotation(glMatrix.quat.create(),this.obj.model);
-    }
-
-    getTransVec(){
-        return glMatrix.vec3.sub(glMatrix.vec3.create(),this.getPos(),this.prevPos);
     }
 
     rotateY(rad){
@@ -87,20 +72,11 @@ class ObjectLoader {
         glMatrix.mat4.translate(this.obj.model,this.obj.model,vecTrans);
     }
 
-    rotateModel(quatRot){
-
-    }
-
     getMinPos(){
         return this.obj.min;
     }
 
     getMaxPos(){return this.obj.max;}
-
-    setModel(newModel){
-        this.prevPos = this.getPos();
-        this.obj.model = newModel;
-    }
 
     setRotation(newRot){
         if(!glMatrix.quat.equals(newRot,this.getRotation())) {

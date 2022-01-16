@@ -1,12 +1,8 @@
 class Particles{
-
-
 	constructor(nbr_particles, gl, physicsWorld, vac){
 		this.nbr_particles = nbr_particles;
 		this.gl = gl;
 		this.particles=[];
-		this.particles_comp = [];
-		this.rigidBodies = [];
 		this.physicsWorld=physicsWorld;
 		this.vacc_radius = 3;
 		this.vac = vac;
@@ -29,20 +25,12 @@ class Particles{
             var pos2=Math.random()*10;
             var pos3=(0.5-Math.random())*20;
 
-            //console.log(pos1, pos2);
-
             var newPos = glMatrix.vec3.fromValues(pos1,pos2,pos3);
-            //var shape = new Ammo.btBoxShape(new Ammo.btVector3());
 
             this.particles[i].setPosition(newPos);
             this.particles[i].createRigidBody(this.physicsWorld,0.01,this.particles[i].getPos(),this.shape);
 
         }
-
-        // particles_comp.push(sphere_shader_comps);
-
-
-        //var shader_lamb = make_shader(this.gl, shader_V_lamb,shader_F_lamb);
 	}
 
 
@@ -79,7 +67,7 @@ class Particles{
 
 		for (var n = dists.length - 1; n >= 0; n--) {
 
-			var index = rigidBodiesBullet.indexOf(rigidBodiesBullet.find(el => el == this.particles[dists[n]].getRigidBody()));
+			var index = rigidBodiesBullet.indexOf(rigidBodiesBullet.find(el => el === this.particles[dists[n]].getRigidBody()));
 			if (index > -1) {
 				var pos1=(0.5-Math.random())*10;
 				var pos2=30;
@@ -158,14 +146,6 @@ class Particles{
 
 	get_particles(){
 		return this.particles;
-	}
-
-	get_particles_rigid(){
-		return this.rigidBodies;
-	}
-
-	get_pos(i){
-		return this.particles[i].getPos();
 	}
 
 }

@@ -1,4 +1,4 @@
-var load_obj = async function(name = 'bunny_small.obj',is_multiple=0) {
+var load_obj = async function(name = 'bunny_small.obj') {
     async function load_mesh(string) {
       var lines = string.split("\n");
       var positions = [];
@@ -90,30 +90,6 @@ var load_obj = async function(name = 'bunny_small.obj',is_multiple=0) {
           max:max
       };
     }
-
-    if (is_multiple === 0){
-        const response = await fetch(name);
-        var text = await response.text();
-        var ret = await load_mesh(text);}
-    else {
-        var ret = [];
-        for (var i = 1; i <= is_multiple; i++) {
-            var tmp = name.split(".obj")[0] + i.toString() + ".obj";
-            const response = await fetch(tmp);
-            var text = await response.text();
-            ret.push(await load_mesh(text))
-        }
-    }
-    return ret;
-};
-
-var make_objects = async function(gl, objs) {
-    var mesh = [];
-    for(var i = 0;i<objs.length;i++){
-        var obj = await objs[i];
-        mesh.push(await make_object(gl,obj))
-    }
-    return mesh
 };
 
 var make_object = async function(gl, obj) {

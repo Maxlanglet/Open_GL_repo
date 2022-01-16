@@ -124,7 +124,6 @@ var make_camera = function(canvas, positionInit, upInit, yaw, pitch,vac) {
                 return;
             }
 
-            // TODO register_mouse not yet working
             else if (key === 'ArrowUp' || key === '+' || key === 'Add') {
                 process_mouse_movement(0, 1.0);
                 return;
@@ -213,10 +212,6 @@ var make_camera = function(canvas, positionInit, upInit, yaw, pitch,vac) {
                 pitch = -max_pitch
             }
         }
-
-        //console.log("yaw and pitch : ", yaw, pitch);
-
-        // Update front, right, up with the new Euler angles
         update_camera_vectors();
     }
 

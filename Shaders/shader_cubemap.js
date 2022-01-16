@@ -22,7 +22,6 @@ const shader_F_cubemap = `
       precision mediump float;
       varying vec3 v_texcoord;
 
-      // We have a samplerCube this time! not a 2D texture
       uniform samplerCube u_cubemap;
 
       void main() {
