@@ -83,6 +83,7 @@ var load_obj = async function(name = 'bunny_small.obj') {
       var vertexCount = vertices.length / 8;// /8 because 3+2+3 dimensions for position/texture/normal
       // console.log("Vertices : ", vertices.length);
       // console.log("Loaded mesh with " + vertexCount + " vertices");
+
       return {
         buffer: new Float32Array(vertices),
         num_triangles: vertexCount,
@@ -90,6 +91,11 @@ var load_obj = async function(name = 'bunny_small.obj') {
           max:max
       };
     }
+    const response = await fetch(name);
+    var text = await response.text();
+    var ret = await load_mesh(text);
+
+    return ret;
 };
 
 var make_object = async function(gl, obj) {
