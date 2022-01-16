@@ -49,7 +49,7 @@
         var lamb_objs_comps = [];
         var wall = await load_obj('../Objects/Room-SW/mesh/interieur_sw.obj');
         var wall_obj = await make_object(gl, wall);
-        var wall_shader_comps = await load_shader_lamb(gl,"../Objects/Room-SW/textures/Concreto_color.png");
+        var wall_shader_comps = await load_shader_lamb(gl,"../Objects/Room-SW/textures/Concreto_color.png","../Objects/Room-SW/textures/Concreto_Bump.png");
         lamb_objs.push(wall_obj);
         lamb_objs_comps.push(wall_shader_comps);
 

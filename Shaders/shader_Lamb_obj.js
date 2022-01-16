@@ -1,17 +1,60 @@
 const shader_V_lamb = `
-      #define NB_LIGHTS 13
 
       attribute vec3 position;
       attribute vec2 texcoord;
+
       attribute vec3 normal;
-      
-      varying vec3 v_diffuse;
-      varying vec3 v_reflective;
+      attribute vec3 tangent;
+      attribute vec3 bitangent;
+
+      varying vec2 v_texcoord;
+      varying vec3 v_color;
+      varying vec3 v_frag_coord;
+
+      varying mat3 v_TBN;
+
+      varying mat4 v_itM;
 
       uniform mat4 M;
       uniform mat4 itM;  // inverse transpose model!
       uniform mat4 V;
       uniform mat4 P;
+
+      void main() {
+        //Model - Position
+        vec4 frag_coord = M*vec4(position, 1.0);
+        gl_Position = P*V*frag_coord;
+        
+        //Texture
+        v_texcoord = texcoord;
+
+        // We can display the normals or bitangent as a color to debug
+        v_color = (normal+1.0)/2.0;
+        //v_color = (bitangent+1.0)/2.0;
+      
+        //create matrix for the TBN space
+        vec3 T = normalize(vec3(M * vec4(tangent, 0.0)));
+        vec3 B = normalize(vec3(M * vec4(bitangent, 0.0)));
+        vec3 N = normalize(vec3(M * vec4(normal, 0.0)));
+        v_TBN = mat3(T,B,N);
+      
+      
+        v_frag_coord = frag_coord.xyz;
+
+        v_itM = itM;
+      }
+    `;
+
+const shader_F_lamb = `
+      
+      precision mediump float;
+
+      #define NB_LIGHTS 13
+
+
+      // varying vec3 v_diffuse;
+      // varying vec3 v_reflective;
+
 
       uniform vec3 view_dir;
       uniform vec3 u_lights_pos[NB_LIGHTS];
@@ -20,60 +63,96 @@ const shader_V_lamb = `
       uniform float coef_att_quadratic;
       
       varying vec2 v_texcoord;
-      void main() {
-        //Model - Position
-        vec4 frag_coord = M*vec4(position, 1.0);
-        gl_Position = P*V*frag_coord;
 
-        //Normal
-        vec3 norm = vec3(itM * vec4(normal, 1.0));
-        
-        vec3 diff = vec3(0.0);
-        vec3 refl = vec3(0.0);
-        for(int i = 0; i<NB_LIGHTS;i++){
-            //Distance
-            float dist_light = distance(u_lights_pos[i],frag_coord.xyz);
-            float att_coef = 1.0/(coef_att_const+coef_att_linear*dist_light+coef_att_quadratic*dist_light*dist_light);
-            //Gouraud diffuse
-            vec3 L = normalize(u_lights_pos[i] - frag_coord.xyz);
-            float prod_vec = max(0.0, dot(norm, L));
-            diff += vec3(prod_vec)*att_coef;
-            //Reflec
-            vec3 R = reflect(-L,norm);
-            vec3 view_dir = normalize(view_dir.xyz - frag_coord.xyz);
-            refl += vec3(pow(max(0.0,dot(R,view_dir)),32.0))*att_coef;
-        }
-        v_diffuse = diff;
-        v_reflective = refl;
-        //Texture
-        v_texcoord = texcoord;
-      }
-    `;
+      varying vec3 v_color;
+      varying vec3 v_frag_coord;
+      varying mat3 v_TBN;
+      varying mat4 v_itM;
 
-const shader_F_lamb = `
-      precision mediump float;
+
+      // ///////
       
-      float ambient_l = 0.2;
+      float ambient_l = 0.25;
       
       uniform float coef_emitted;
       uniform float coef_diff;
       uniform float coef_refl;
       
-      varying vec3 v_reflective;
-      varying vec3 v_diffuse;
-      varying vec2 v_texcoord;
+
       uniform sampler2D u_texture;
+      uniform sampler2D u_bumpmap;
       
       void main() {
+
+      //   //bumpmap
+        vec3 normal = texture2D(u_bumpmap, vec2(v_texcoord.x, 1.0-v_texcoord.y)).rgb;
+
+        normal = normalize(normal*2.0 - 1.0);
+        normal = normalize(v_TBN * normal);
+
+        //Normal
+        vec3 norm = vec3(v_itM * vec4(normal, 1.0));
+      
+        // float diffusion = max(0.0, dot(normal, L));
+
+        vec3 diff = vec3(0.0);
+        vec3 refl = vec3(0.0);
+        for(int i = 0; i<NB_LIGHTS;i++){
+            //Distance
+            float dist_light = distance(u_lights_pos[i],v_frag_coord.xyz);
+            float att_coef = 1.0/(coef_att_const+coef_att_linear*dist_light+coef_att_quadratic*dist_light*dist_light);
+            //Gouraud diffuse
+            vec3 L = normalize(u_lights_pos[i] - v_frag_coord.xyz);
+            float prod_vec = max(0.0, dot(normal, L));
+
+            diff += vec3(prod_vec);//*att_coef;
+            //Reflec
+            vec3 R = reflect(-L,normal);
+            vec3 view_dir = normalize(view_dir.xyz - v_frag_coord.xyz);
+            refl += vec3(pow(max(0.0,dot(R,view_dir)),32.0))*att_coef;
+        }
+        // v_diffuse = diff;
+        // v_reflective = refl;
+
+
         vec4 texture = texture2D(u_texture, vec2(v_texcoord.x, 1.0-v_texcoord.y));
-        vec4 diff_refl = vec4(v_diffuse*coef_diff + v_reflective*coef_refl,1.0);
+        vec4 diff_refl = vec4(diff*coef_diff + refl*coef_refl,1.0);
         gl_FragColor = (vec4(vec3(coef_emitted),1.0) + vec4(vec3(ambient_l),1.0) + diff_refl)*texture;
+
+
+
+        ///////
+
+
+        // // Phong: diffuse light is computed for every fragment
+        // vec3 L = normalize(u_lights_pos[0] - v_frag_coord.xyz);
+
+        // //vec3 get normal from bump map
+        // vec3 normal = texture2D(u_bumpmap, vec2(v_texcoord.x, 1.0-v_texcoord.y)).rgb;
+        // normal = normalize(normal*2.0 - 1.0);
+        // //transform normal using TBN space
+        // normal = normalize(v_TBN * normal);
+      
+        // float diffusion = max(0.0, dot(normal, L));
+        // float ambient = 0.25;
+        
+        // vec3 color = vec3(diffusion+ambient);
+        // gl_FragColor = vec4(color, 1.0) * texture2D(u_texture, vec2(v_texcoord.x, 1.0-v_texcoord.y));
+        
       }
     `;
 
 
-var load_shader_lamb = async function(gl,path_texture,coef_diff=1.0,coef_refl=0.3,coef_emit=0.0,coef_att_const=0.55,coef_att_linear=0.2,coef_att_quadratic=0.4) {
+var load_shader_lamb = async function(gl,path_texture,path_bump="nothing",coef_diff=1.0,coef_refl=0.3,coef_emit=0.0,coef_att_const=0.55,coef_att_linear=0.2,coef_att_quadratic=0.4) {
     const texture =  make_texture(gl,path_texture);
+
+    var bump_map = make_texture(gl,"../Objects/Room-SW/textures/Material_Porta_Normal_OpenGL.png");
+
+    if (path_bump!="nothing"){
+      bump_map = make_texture(gl,path_bump);
+      console.log(path_bump);
+    }
+
     const lights_pos = [glMatrix.vec3.fromValues(4.5501, 2.2558, 4.153),
         glMatrix.vec3.fromValues(-6.25, 2.3552, 4.3568),
          glMatrix.vec3.fromValues(-0.28676, 2.7222, 4.2632),
@@ -106,6 +185,9 @@ var load_shader_lamb = async function(gl,path_texture,coef_diff=1.0,coef_refl=0.
         for(let i = 0; i<NB_LIGHTS;i++)
             u_lights_pos.push(gl.getUniformLocation(shader.program, 'u_lights_pos['+i.toString()+']'));
         u_tex = gl.getUniformLocation(shader.program, 'u_texture');
+
+
+        u_bumpmap = gl.getUniformLocation(shader.program, 'u_bumpmap');
         isFirst = false;
     }
 
@@ -134,6 +216,11 @@ var load_shader_lamb = async function(gl,path_texture,coef_diff=1.0,coef_refl=0.
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, texture);
         gl.uniform1i(u_tex, 0);
+
+        //bumpmap
+        gl.activeTexture(gl.TEXTURE1);
+        gl.bindTexture(gl.TEXTURE_2D, bump_map);
+        gl.uniform1i(u_bumpmap, 1);
     }
     return {
         shader_activate: shader_activate

@@ -50,9 +50,11 @@
         let shader_cubemap;
         let cubeMap;
         let projection;
+        let view;
         let tmpTrans; //Tmp ammo.js tansform obj
         let deltaTime = 0;
         const scaleFactor = 0.55;
+        let particles;
 
         function setupPhysicsWorld(){
             //bt prefix for Bullet
@@ -73,7 +75,7 @@
             //Load the object
             var tmpShape = null;
             var floor =  new ObjectLoader();
-            await floor.constructorAsync(gl,"../Objects/Room-SW/mesh/sol.obj","../Objects/Room-SW/textures/Concreto_color.png","");
+            await floor.constructorAsync(gl,"../Objects/Room-SW/mesh/sol.obj","../Objects/Room-SW/textures/Concreto_color.png","", "../Objects/Room-SW/textures/Concreto_Bump.png");
             floor.createRigidBody(physicsWorld,0,floor.getCenter(),new Ammo.btBoxShape( new Ammo.btVector3( scaleFactor*(floor.getMaxPos()[0]-floor.getMinPos()[0]),
                                                             scaleFactor*(floor.getMaxPos()[1]-floor.getMinPos()[1]),
                                                             scaleFactor*(floor.getMaxPos()[2]-floor.getMinPos()[2]) ) ));
@@ -184,6 +186,19 @@
             rigidBodies.push(vac);
             rigidBodiesBullet.push(vac.getRigidBody());
 
+            //Particles
+
+            particles = new Particles(100, gl, physicsWorld, vac);
+
+            await particles.initialize();
+
+            var parts = particles.get_particles();
+            //var parts_rigid = particles.get_particles_rigid();
+            for (var i = particles.get_num_part() - 1; i >= 0; i--) {
+                rigidBodies.push(parts[i]);
+                rigidBodiesBullet.push(parts[i].getRigidBody());
+            }
+
             cubeMap =  new ObjectLoader();
             await cubeMap.constructorAsync(gl,"../Objects/Room-SW/mesh/cubemap.obj","../Objects/Room-SW/textures/nightpass","",isCubemap=true);
 
@@ -208,7 +223,7 @@
             //Update physics
             updatePhysics(deltaTime);
             //Update camera
-            var view = camera.get_view_matrix();
+            view = camera.get_view_matrix();
 
             //Shaders
             shader_lamb.use();
@@ -219,6 +234,7 @@
             for (var i = 0; i < lamb_objs.length; i++) {
                 lamb_objs[i].activateObject(shader_lamb,camera,unif['model']);
             }
+            particles.spawn_particles(shader_lamb, unif, camera);
 
             gl.depthFunc(gl.LEQUAL);
             shader_cubemap.use();
@@ -234,6 +250,8 @@
 
       function updatePhysics(deltaTime){
         physicsWorld.stepSimulation(deltaTime,10);
+
+        particles.update(rigidBodies, rigidBodiesBullet, shader_lamb, camera);
 
         for(let i = 0;i<rigidBodiesBullet.length;i++){
             let objOpenGL = rigidBodies[ i ];
