@@ -17,7 +17,7 @@ class Particles{
 			this.object_loader = new ObjectLoader();
 
 
-			await this.object_loader.constructorAsync(this.gl,"../Objects/part.obj", "../Objects/Room-SW/textures/dust.png");
+			await this.object_loader.constructorAsync(this.gl,"../Objects/part.obj", "../Objects/Room-SW/textures/Yellow.png");
             this.particles.push(this.object_loader);
             //this.particles_comp.push(sphere_shader_comps);
 

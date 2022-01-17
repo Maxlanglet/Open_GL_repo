@@ -185,7 +185,7 @@
             rigidBodiesBullet.push(vac.getRigidBody());
 
             //Particles
-            particles = new Particles(40, gl, physicsWorld, vac);
+            particles = new Particles(100, gl, physicsWorld, vac);
             await particles.initialize();
             var parts = particles.get_particles();
             for (var i = particles.get_num_part() - 1; i >= 0; i--) {
