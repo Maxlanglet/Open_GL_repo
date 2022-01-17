@@ -168,7 +168,7 @@ var make_object = async function(gl, obj) {
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
         }
 
-    function activate(shader) {
+    function activate(shader,isCubeMap) {
         // these object have all 3 positions + 2 textures + 3 normals
         gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
         const sizeofFloat = Float32Array.BYTES_PER_ELEMENT;
@@ -176,23 +176,25 @@ var make_object = async function(gl, obj) {
         gl.enableVertexAttribArray(att_pos);
         gl.vertexAttribPointer(att_pos, 3, gl.FLOAT, false, 8 * sizeofFloat, 0 * sizeofFloat);
 
-        const att_textcoord = gl.getAttribLocation(shader.program, "texcoord");
-        gl.enableVertexAttribArray(att_textcoord);
-        gl.vertexAttribPointer(att_textcoord, 2, gl.FLOAT, false, 8 * sizeofFloat, 3 * sizeofFloat);
+        if(!isCubeMap) {
+            const att_textcoord = gl.getAttribLocation(shader.program, "texcoord");
+            gl.enableVertexAttribArray(att_textcoord);
+            gl.vertexAttribPointer(att_textcoord, 2, gl.FLOAT, false, 8 * sizeofFloat, 3 * sizeofFloat);
 
-        const att_nor = gl.getAttribLocation(shader.program, 'normal');
-        gl.enableVertexAttribArray(att_nor);
-        gl.vertexAttribPointer(att_nor, 3, gl.FLOAT, false, 8 * sizeofFloat, 5 * sizeofFloat);
+            const att_nor = gl.getAttribLocation(shader.program, 'normal');
+            gl.enableVertexAttribArray(att_nor);
+            gl.vertexAttribPointer(att_nor, 3, gl.FLOAT, false, 8 * sizeofFloat, 5 * sizeofFloat);
 
-        if(activateTangBiTang) {
-            gl.bindBuffer(gl.ARRAY_BUFFER, bufferTangBiTang);
-            const tang_pos = gl.getAttribLocation(shader.program, 'tangent');
-            gl.enableVertexAttribArray(tang_pos);
-            gl.vertexAttribPointer(tang_pos, 3, gl.FLOAT, false, 6 * sizeofFloat, 0 * sizeofFloat);
-            const bitang_pos = gl.getAttribLocation(shader.program, 'bitangent');
-            gl.enableVertexAttribArray(bitang_pos);
-            gl.vertexAttribPointer(bitang_pos, 3, gl.FLOAT, false, 6 * sizeofFloat, 3 * sizeofFloat);
+            if (activateTangBiTang) {
+                gl.bindBuffer(gl.ARRAY_BUFFER, bufferTangBiTang);
+                const tang_pos = gl.getAttribLocation(shader.program, 'tangent');
+                gl.enableVertexAttribArray(tang_pos);
+                gl.vertexAttribPointer(tang_pos, 3, gl.FLOAT, false, 6 * sizeofFloat, 0 * sizeofFloat);
+                const bitang_pos = gl.getAttribLocation(shader.program, 'bitangent');
+                gl.enableVertexAttribArray(bitang_pos);
+                gl.vertexAttribPointer(bitang_pos, 3, gl.FLOAT, false, 6 * sizeofFloat, 3 * sizeofFloat);
 
+            }
         }
     }
 

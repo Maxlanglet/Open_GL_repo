@@ -235,7 +235,7 @@
             unif = shader_cubemap.get_uniforms();
             gl.uniformMatrix4fv(unif['view'], false, view);
             gl.uniformMatrix4fv(unif['proj'], false, projection);
-            cubeMap.activateObject(shader_cubemap,camera,unif['model']);
+            cubeMap.activateObject(shader_cubemap,camera,unif['model'],true);
 
             fps(time);
 

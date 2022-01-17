@@ -21,8 +21,8 @@ class ObjectLoader {
         this.prevPos = glMatrix.vec3.create();
     }
 
-    activateObject(shader,camera,posModel){
-        this.obj.activate(shader);
+    activateObject(shader,camera,posModel,isCubeMap=false){
+        this.obj.activate(shader,isCubeMap);
         this.shaderComps.shader_activate(shader, this.obj, posModel, camera.get_position());
         this.obj.draw();
 
