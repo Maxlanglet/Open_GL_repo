@@ -6,7 +6,7 @@ class Particles{
 		this.physicsWorld=physicsWorld;
 		this.vacc_radius = 3;
 		this.vac = vac;
-		this.shape = new Ammo.btSphereShape(0.15);
+		this.shape = new Ammo.btSphereShape(0.075);
 	}
 
 
@@ -17,7 +17,7 @@ class Particles{
 			this.object_loader = new ObjectLoader();
 
 
-			await this.object_loader.constructorAsync(this.gl,"../Objects/part.obj", "../Objects/Room-SW/textures/Yellow.png");
+			await this.object_loader.constructorAsync(this.gl,"../Objects/part.obj", "../Objects/Room-SW/textures/dust.png");
             this.particles.push(this.object_loader);
             //this.particles_comp.push(sphere_shader_comps);
 

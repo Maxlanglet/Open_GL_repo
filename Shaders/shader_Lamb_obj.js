@@ -67,12 +67,11 @@ const shader_F_lamb = `
       uniform sampler2D u_bumpmap;
       
       void main() {
-
         //bumpmap - Normal
-        vec3 normal = texture2D(u_bumpmap, vec2(v_texcoord.x, 1.0-v_texcoord.y)).rgb;
+        vec3 normal = texture2D(u_bumpmap, vec2(v_texcoord.x, v_texcoord.y)).rgb;
         normal = normalize(normal*2.0 - 1.0);
         normal = normalize(v_TBN * normal);
-        normal = vec3(v_itM * vec4(normal, 1.0));
+        //normal = vec3(v_itM * vec4(normal, 1.0));
 
         // Light equations
         vec3 diff = vec3(0.0);
@@ -85,17 +84,17 @@ const shader_F_lamb = `
             vec3 L = normalize(u_lights_pos[i] - v_frag_coord.xyz);
             float prod_vec = max(0.0, dot(normal, L));
 
-            diff += vec3(prod_vec);
+            diff += vec3(prod_vec)*att_coef;
             
             //Reflec
             vec3 R = reflect(-L,normal);
             vec3 view_dir = normalize(view_dir.xyz - v_frag_coord.xyz);
             
-            refl += vec3(pow(max(0.0,dot(R,view_dir)),32.0))*att_coef;
+            refl += vec3(pow(max(0.0,dot(R,view_dir)),32.0))*att_coef*0.1;
         }
  
         vec4 texture = texture2D(u_texture, vec2(v_texcoord.x, 1.0-v_texcoord.y));
-        vec4 diff_refl = vec4(diff*coef_diff + refl*coef_refl,1.0);
+        vec4 diff_refl = vec4((diff*coef_diff + refl*coef_refl),1.0);
         gl_FragColor = (vec4(vec3(coef_emitted),1.0) + vec4(vec3(ambient_l),1.0) + diff_refl)*texture;
       }
     `;
@@ -104,7 +103,7 @@ const shader_F_lamb = `
 var load_shader_lamb = async function(gl,path_texture,path_bump="nothing",coef_diff=1.0,coef_refl=0.3,coef_emit=0.0,coef_att_const=0.55,coef_att_linear=0.2,coef_att_quadratic=0.4) {
     const texture =  make_texture(gl,path_texture);
 
-    var bump_map = make_texture(gl,"../Objects/Room-SW/textures/Material_Porta_Normal_OpenGL.png");
+    var bump_map = make_texture(gl,"../Objects/Room-SW/textures/zero_bump.png");
 
     if (path_bump!=="nothing"){
       bump_map = make_texture(gl,path_bump);
@@ -144,7 +143,7 @@ var load_shader_lamb = async function(gl,path_texture,path_bump="nothing",coef_d
         u_tex = gl.getUniformLocation(shader.program, 'u_texture');
 
         u_bumpmap = gl.getUniformLocation(shader.program, 'u_bumpmap');
-        //isFirst = false;
+        isFirst = false;
     }
 
     function shader_activate(shader,mesh,pos_model,view_dir) {

@@ -107,6 +107,8 @@ var make_object = async function(gl, obj) {
     gl.bufferData(gl.ARRAY_BUFFER, obj.buffer, gl.STATIC_DRAW);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
+    const bufferTangBiTang = gl.createBuffer();
+
     var Model = glMatrix.mat4.create();
     //Model = glMatrix.mat4.translate(Model, Model, glMatrix.vec3.fromValues(0.5, -0.5, -1.0));
     let center = [0,0,0];
@@ -135,6 +137,37 @@ var make_object = async function(gl, obj) {
         return new Ammo.btBvhTriangleMeshShape(triangleMesh,true,true);
     }
 
+    var activateTangBiTang = false;
+
+    function buildTangentBitan() {
+        activateTangBiTang = true;
+        var tangBiTang = [];
+        //Tangent-bitangent computation
+        var lengthArray = obj.buffer.length;
+        for (var i = 0; i < lengthArray; i += 8) {
+            //According to LearOpenGL
+            var e1= [0,0,0];
+            var e2 = [0,0,0];
+            var deltaUV1 = [0,0,0];
+            var deltaUV2= [0,0,0];
+
+            for(var coord=0; coord<3;coord+=1) {
+                e1[coord] = obj.buffer[i + 8 + coord] - obj.buffer[i+ coord];
+                e2[coord] = obj.buffer[i + 16+ coord] - obj.buffer[i+ coord];
+                deltaUV1[coord] = obj.buffer[i+11+ coord] - obj.buffer[i+3+ coord];
+                deltaUV2[coord] = obj.buffer[i+19+ coord] - obj.buffer[i+3+ coord];
+            }
+            var f = 1/(deltaUV1[0]*deltaUV2[1]-deltaUV2[0]*deltaUV1[1]);
+            for(coord=0; coord<3;coord+=1)
+                tangBiTang.push(f * (deltaUV2[1] * e1[coord] - deltaUV1[1] * e2[coord]));
+            for(coord=0; coord<3;coord+=1)
+                tangBiTang.push(f * (-deltaUV2[0] * e1[coord] - deltaUV1[0] * e2[coord]));
+        }
+        gl.bindBuffer(gl.ARRAY_BUFFER, bufferTangBiTang);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(tangBiTang), gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, null);
+        }
+
     function activate(shader) {
         // these object have all 3 positions + 2 textures + 3 normals
         gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
@@ -151,6 +184,16 @@ var make_object = async function(gl, obj) {
         gl.enableVertexAttribArray(att_nor);
         gl.vertexAttribPointer(att_nor, 3, gl.FLOAT, false, 8 * sizeofFloat, 5 * sizeofFloat);
 
+        if(activateTangBiTang) {
+            gl.bindBuffer(gl.ARRAY_BUFFER, bufferTangBiTang);
+            const tang_pos = gl.getAttribLocation(shader.program, 'tangent');
+            gl.enableVertexAttribArray(tang_pos);
+            gl.vertexAttribPointer(tang_pos, 3, gl.FLOAT, false, 6 * sizeofFloat, 0 * sizeofFloat);
+            const bitang_pos = gl.getAttribLocation(shader.program, 'bitangent');
+            gl.enableVertexAttribArray(bitang_pos);
+            gl.vertexAttribPointer(bitang_pos, 3, gl.FLOAT, false, 6 * sizeofFloat, 3 * sizeofFloat);
+
+        }
     }
 
     function draw() {
@@ -165,7 +208,8 @@ var make_object = async function(gl, obj) {
         center:center,
         min:obj.min,
         max:obj.max,
-        buildShape:buildTriangleMeshShape
-    }
+        buildShape:buildTriangleMeshShape,
+        buildTangentBitan: buildTangentBitan
+    };
 
 };

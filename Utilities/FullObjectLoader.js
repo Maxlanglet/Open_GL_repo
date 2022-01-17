@@ -12,8 +12,10 @@ class ObjectLoader {
 
         if (isCubemap === true)
             this.shaderComps = await load_shader_cubemap(gl, textureName,coef_refl=coef_refl,coef_emit=coef_emit);
-        else
-            this.shaderComps = await load_shader_lamb(gl, textureName,bumpname,1.0,coef_refl,coef_emit);
+        else {
+            this.shaderComps = await load_shader_lamb(gl, textureName, bumpname, 1.0, coef_refl, coef_emit);
+            this.obj.buildTangentBitan();
+        }
 
         this.shapeName = shapeName;
         this.prevPos = glMatrix.vec3.create();
