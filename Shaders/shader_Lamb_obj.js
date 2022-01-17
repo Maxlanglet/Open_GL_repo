@@ -68,10 +68,10 @@ const shader_F_lamb = `
       
       void main() {
         //bumpmap - Normal
-        vec3 normal = texture2D(u_bumpmap, vec2(v_texcoord.x, v_texcoord.y)).rgb;
-        normal = normalize(normal*2.0 - 1.0);
-        normal = normalize(v_TBN * normal);
-        //normal = vec3(v_itM * vec4(normal, 1.0));
+        vec3 norm = texture2D(u_bumpmap, vec2(v_texcoord.x, v_texcoord.y)).rgb;
+        norm = normalize(norm*2.0 - 1.0);
+        norm = normalize(v_TBN * norm);
+        norm = vec3(v_itM * vec4(norm, 1.0));
 
         // Light equations
         vec3 diff = vec3(0.0);
@@ -82,12 +82,12 @@ const shader_F_lamb = `
             float att_coef = 1.0/(coef_att_const+coef_att_linear*dist_light+coef_att_quadratic*dist_light*dist_light);
             //Gouraud diffuse
             vec3 L = normalize(u_lights_pos[i] - v_frag_coord.xyz);
-            float prod_vec = max(0.0, dot(normal, L));
+            float prod_vec = max(0.0, dot(norm, L));
 
             diff += vec3(prod_vec)*att_coef;
             
             //Reflec
-            vec3 R = reflect(-L,normal);
+            vec3 R = reflect(-L,norm);
             vec3 view_dir = normalize(view_dir.xyz - v_frag_coord.xyz);
             
             refl += vec3(pow(max(0.0,dot(R,view_dir)),32.0))*att_coef*0.1;
